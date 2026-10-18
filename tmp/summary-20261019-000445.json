@@ -1,0 +1,4 @@
+{
+  "summary": "Beta-Härtung umgesetzt: 7 neue Vitest-Fälle (DndController/No-op), E2E für Kanban (Transfer, Drop-Regel, Undo, Escape) und Editor-Tastatur, Playwright-Dual-Server (Editor 14273, Kanban 14274), 24/24 Tests in Chromium/Firefox/WebKit nach WebKit-Install. Performance-Fixture examples/perf-list plus scripts/benchmark-drag.mjs und bundle-size-report.mjs mit docs/performance/*. Beta-Checkliste und implementation-status auf echte pnpm check / test / tarball Ergebnisse aktualisiert; manuelle A11y/Touch bleibt offen.",
+  "current_status": "@kamod-ch/dnd MVP plus Beta-Gates: pnpm check grün, 11 Vitest, 24 Playwright, Tarball-Smoke, Performance-Dokumentation. Nächster sinnvoller Schritt außerhalb dieses Plans: manuelle SR/Touch-Checkliste oder veröffentlichbare Beta nach separatem Auftrag."
+}

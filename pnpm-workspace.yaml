@@ -1,0 +1,6 @@
+packages:
+  - packages/*
+  - spikes/*
+  - examples/*
+allowBuilds:
+  esbuild: true

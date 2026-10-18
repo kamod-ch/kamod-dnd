@@ -1,0 +1,25 @@
+{
+  "name": "@kamod-dnd/example-editor-blocks",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 14273 --strictPort",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kamod-ch/dnd": "workspace:*",
+    "@kamod-ch/icons": "^2.0.0",
+    "@kamod-ch/themes": "^0.2.1",
+    "@kamod-ch/ui": "^2.0.1",
+    "@preact/signals": "^2.9.4",
+    "preact": "^10.29.7"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.2",
+    "typescript": "^7.0.2",
+    "vite": "^7.1.7"
+  }
+}

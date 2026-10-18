@@ -1,0 +1,4 @@
+{
+  "summary": "Das leere kamod-dnd-Repository wurde gemäß Plan (Prompts 01–08) aufgebaut: pnpm-Workspace mit @kamod-ch/dnd (Pragmatic DnD-Adapter, Signals, Sortable/MoveIntent, A11y-Hooks), Engine-Spikes und ADR, Editor-/Kanban-Beispiele mit Kamod UI, Vitest, Playwright (Chromium), Tarball-Consumer-Smoke sowie README/CHANGELOG/implementation-status und roadmap-progress. Kritischer Fix: ./sortable zeigt auf dasselbe Bundle wie der Hauptexport, damit kein doppeltes Preact-Context-Modul entsteht; DndProvider-Cleanup für StrictMode angepasst.",
+  "current_status": "Alle Plan-Aufgaben sind umgesetzt oder mit dokumentierten Lücken abgeschlossen (manuelle Touch/Screenreader, Performance 100/500, optional FF/WebKit). `pnpm check` und Playwright Chromium grün nach Format-Lauf. Kein Push/Publish/Version-Bump."
+}

@@ -1,0 +1,33 @@
+{
+  "name": "kamod-dnd",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Headless Preact DnD library workspace for @kamod-ch/dnd.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --filter @kamod-ch/dnd build",
+    "typecheck": "pnpm --filter @kamod-ch/dnd typecheck && pnpm --filter './examples/*' typecheck && pnpm --filter './spikes/*' typecheck",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "test": "pnpm --filter @kamod-ch/dnd test",
+    "test:browser": "playwright test",
+    "test:browser:install": "playwright install chromium firefox webkit",
+    "check": "pnpm typecheck && pnpm format:check && pnpm lint && pnpm test && pnpm build",
+    "spike:build": "pnpm --filter './spikes/*' build",
+    "examples:build": "pnpm --filter './examples/*' build",
+    "qa:tarball": "node scripts/qa-tarball-consumer.mjs",
+    "bench:drag": "node scripts/benchmark-drag.mjs",
+    "size:report": "node scripts/bundle-size-report.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1",
+    "@types/node": "^22.10.0",
+    "oxfmt": "^0.73.0",
+    "oxlint": "^1.88.0",
+    "typescript": "^7.0.2"
+  },
+  "packageManager": "pnpm@11.17.0"
+}
