@@ -1,6 +1,6 @@
 # Lokale Beta-Release-Checkliste
 
-Stand: 2026-10-18 (automatisierte Punkte verifiziert).
+Stand: 2026-10-19 (Plan 003 Gates; Version `0.2.0` lokal, npm publish ausstehend).
 
 - [x] `pnpm check` grün
 - [x] `pnpm test:browser` grün (Chromium, Firefox, WebKit – 24 Tests)

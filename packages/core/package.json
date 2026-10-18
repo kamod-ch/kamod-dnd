@@ -1,6 +1,6 @@
 {
   "name": "@kamod-ch/dnd",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Headless Preact DnD primitives with signals, sortable lists, and accessible keyboard support.",
   "keywords": [
     "accessibility",

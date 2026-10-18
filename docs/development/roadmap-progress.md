@@ -99,3 +99,5 @@ Stand: 2026-10-18. Quelle: `docs/development/kamod-dnd-plan-cursor-prompts.md`.
 **Umgesetzte Änderungen:** `README.md`, `CHANGELOG.md`, `docs/implementation-status.md`, `docs/beta-release-checklist.md`, `LICENSE`.
 
 **Prüfungen:** `pnpm check` (siehe Abschlusslauf).
+
+**Plan 003 (2026-10-19):** `@kamod-ch/dnd/tree` Subpath und Release `0.2.0` vorbereitet; npm publish nur nach explizitem Auftrag ([`plans/003-release-tree.md`](../../plans/003-release-tree.md)).

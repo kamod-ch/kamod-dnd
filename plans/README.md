@@ -10,6 +10,7 @@ starting, honor its STOP conditions, and update the status row when done.
 | ---- | ------------------------------------------------------------ | -------- | ------ | ---------- | ------ |
 | 001  | Validate tree support and define a production-ready tree API | P2       | M      | —          | DONE   |
 | 002  | Ship `@kamod-ch/dnd/tree` with nested drop-target engine fix | P2       | L      | 001        | DONE   |
+| 003  | First public release of `@kamod-ch/dnd` including `./tree`   | P2       | S      | 002        | BLOCKED (awaiting explicit publish authorization) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale — finding fixed independently or approach
@@ -24,6 +25,9 @@ abandoned)
 - Plan 002 implements the GO WITH CORE EXTENSION outcome from Plan 001
   ([`002-tree-subpath.md`](002-tree-subpath.md)). Do not start Plan 002 until
   Plan 001 is DONE.
+- Plan 003 ([`003-release-tree.md`](003-release-tree.md)) versions and, only
+  with an explicit publish order, publishes `0.2.0`. It does not add
+  auto-expand, virtualization, grids, or flattened-row trees.
 
 ## Findings considered and rejected
 
