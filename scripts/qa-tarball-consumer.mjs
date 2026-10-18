@@ -47,7 +47,8 @@ writeFileSync(
   join(dir, "main.jsx"),
   `import { DndProvider } from '@kamod-ch/dnd';
 import { useSortable } from '@kamod-ch/dnd/sortable';
-console.log(typeof DndProvider, typeof useSortable);`,
+import { applyTreeMove, DEFAULT_ROOT_CONTAINER_ID } from '@kamod-ch/dnd/tree';
+console.log(typeof DndProvider, typeof useSortable, typeof applyTreeMove, DEFAULT_ROOT_CONTAINER_ID);`,
 );
 execSync("npm install --ignore-scripts", { cwd: dir, stdio: "inherit" });
 execSync("npm run build", { cwd: dir, stdio: "inherit" });

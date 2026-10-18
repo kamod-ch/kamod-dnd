@@ -1,0 +1,35 @@
+{
+  "name": "@kamod-ch/dnd-docs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "PreactPress documentation and examples for @kamod-ch/dnd.",
+  "type": "module",
+  "scripts": {
+    "brand:sync": "kamod-brand-sync-docs --target public",
+    "predev": "pnpm run brand:sync",
+    "prebuild": "pnpm run brand:sync",
+    "dev": "preactpress dev",
+    "build": "preactpress build",
+    "preview": "preactpress preview",
+    "check": "preactpress check",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "@kamod-ch/brand": "^0.4.0",
+    "@kamod-ch/dnd": "workspace:*",
+    "@kamod-ch/themes": "^0.2.1",
+    "@preact/signals": "^2.11.3",
+    "preact": "^11.0.1"
+  },
+  "devDependencies": {
+    "@kamod-ch/preactpress": "^3.0.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}

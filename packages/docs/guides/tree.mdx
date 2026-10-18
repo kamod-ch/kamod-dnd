@@ -1,0 +1,50 @@
+---
+title: Hierarchical trees
+description: Opt-in @kamod-ch/dnd/tree helpers and the container-per-parent UI pattern.
+---
+
+Hierarchical reorder and reparent use the same **`MoveIntent`** as flat lists. The optional **`@kamod-ch/dnd/tree`** subpath ships pure helpers; your app still owns node data and rendering.
+
+## Install path
+
+```bash
+pnpm add @kamod-ch/dnd @preact/signals preact
+```
+
+```ts
+import { DndProvider, type MoveIntent } from "@kamod-ch/dnd";
+import { useSortable, useSortableContainer } from "@kamod-ch/dnd/sortable";
+import {
+  applyTreeMove,
+  DEFAULT_ROOT_CONTAINER_ID,
+  parentOf,
+  validateTreeMove,
+  type TreeNode,
+  type TreeState,
+} from "@kamod-ch/dnd/tree";
+```
+
+## Container-per-parent
+
+Each parent’s ordered children are a **container id** (the parent node id, or `DEFAULT_ROOT_CONTAINER_ID` for top-level roots). Register:
+
+- **`useSortableContainer`** on the child **list** element (`data-testid="children-{parentId}"` in the spike).
+- **`useSortable`** on the **row header** only — do not wrap nested lists in the same item drop target, or pointer hits will miss item edges.
+
+In `onMove`, run `validateTreeMove` then `applyTreeMove` and replace your tree state when the result is `ok`.
+
+## Engine behavior
+
+Nested child lists register container drop targets. The pragmatic engine picks the active target with **`pickActiveDropTarget`** (container vs item precedence) instead of always using `dropTargets[0]`. Flat Kanban and editor examples keep item-edge reordering.
+
+## Reference fixture
+
+The repo spike [`spikes/tree-spike`](https://github.com/kamod-ch/kamod-dnd/tree/main/spikes/tree-spike) is the browser regression fixture (Vitest + Playwright). Run:
+
+```bash
+pnpm --filter @kamod-dnd/spike-tree test:e2e
+```
+
+## Limitations
+
+Touch devices and screen readers are **not** certified for tree reparent yet. See [`docs/tree-evaluation.md`](https://github.com/kamod-ch/kamod-dnd/blob/main/docs/tree-evaluation.md) and [`docs/a11y-manual-checklist.md`](https://github.com/kamod-ch/kamod-dnd/blob/main/docs/a11y-manual-checklist.md) before marketing full tree a11y.

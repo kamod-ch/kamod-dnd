@@ -1,0 +1,53 @@
+---
+title: Examples
+description: Interactive drag-and-drop demos for sortable lists, Kanban boards, and editor blocks.
+---
+
+import { ExampleFrame } from "../components/shared/ExampleFrame";
+import { SortableListDemo, sortableListDemoCode } from "../components/demos/SortableListDemo";
+import { KanbanDemo, kanbanDemoCode } from "../components/demos/KanbanDemo";
+import { EditorBlocksDemo, editorBlocksDemoCode } from "../components/demos/EditorBlocksDemo";
+
+Each card runs the real `@kamod-ch/dnd` package from this workspace — not a mock. Drag from the **⠿** handle; use the keyboard buttons on Kanban and editor demos to move items without a pointer.
+
+## Sortable list
+
+Single container, reorder by index. Target index is computed **after removing** the item from the source list.
+
+<ExampleFrame
+  id="sortable-list"
+  title="Vertical list"
+  description="Minimal pattern from the package README — one container id and applyMoveIntentToIds."
+  preview={<SortableListDemo />}
+  code={sortableListDemoCode}
+  badges={["sortable", "handle"]}
+  class="not-prose my-8"
+/>
+
+## Kanban
+
+Three columns with transfer into an empty **done** column. Cards whose title contains `blocked` cannot enter **done** (`dropRule`).
+
+<ExampleFrame
+  id="kanban"
+  title="Cross-container transfer"
+  description="Remap domain objects from order maps after each MoveIntent."
+  preview={<KanbanDemo />}
+  code={kanbanDemoCode}
+  badges={["dropRule", "transfer", "keyboard"]}
+  class="not-prose my-8"
+/>
+
+## Editor blocks
+
+Variable-height blocks (heading, text, image). Text remains selectable because dragging starts only on the handle.
+
+<ExampleFrame
+  id="editor-blocks"
+  title="Editor-style blocks"
+  description="Same pattern as examples/editor-blocks in the repo."
+  preview={<EditorBlocksDemo />}
+  code={editorBlocksDemoCode}
+  badges={["scrollRef", "a11y", "keyboard"]}
+  class="not-prose my-8"
+/>

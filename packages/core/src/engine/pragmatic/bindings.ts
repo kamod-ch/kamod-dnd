@@ -11,9 +11,8 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import type { DndController } from "../../session/controller.js";
 import type { DndId } from "../../session/types.js";
-
-const ITEM_TYPE = "kamod-dnd-item";
-const CONTAINER_TYPE = "kamod-dnd-container";
+import { pickActiveDropTarget } from "./drop-target.js";
+import { CONTAINER_TYPE, ITEM_TYPE } from "./types.js";
 
 export type EngineBindingOptions = {
   scrollElement?: HTMLElement | null;
@@ -33,7 +32,7 @@ export function bindPragmaticEngine<TData>(
         controller.handleDragStart(String(source.data.itemId));
       },
       onDrag: ({ location }) => {
-        const target = location.current.dropTargets[0];
+        const target = pickActiveDropTarget(location.current.dropTargets);
         if (!target) {
           return;
         }

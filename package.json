@@ -20,9 +20,13 @@
     "examples:build": "pnpm --filter './examples/*' build",
     "qa:tarball": "node scripts/qa-tarball-consumer.mjs",
     "bench:drag": "node scripts/benchmark-drag.mjs",
-    "size:report": "node scripts/bundle-size-report.mjs"
+    "size:report": "node scripts/bundle-size-report.mjs",
+    "docs:dev": "pnpm --filter @kamod-ch/dnd-docs dev",
+    "docs:build": "pnpm --filter @kamod-ch/dnd-docs build",
+    "brand:readme": "kamod-brand-readme --product DnD --output .github/assets"
   },
   "devDependencies": {
+    "@kamod-ch/brand": "^0.4.0",
     "@playwright/test": "^1.55.1",
     "@types/node": "^22.10.0",
     "oxfmt": "^0.73.0",

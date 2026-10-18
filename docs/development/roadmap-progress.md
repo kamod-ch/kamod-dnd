@@ -4,17 +4,17 @@ Stand: 2026-10-18. Quelle: `docs/development/kamod-dnd-plan-cursor-prompts.md`.
 
 ## Aufgabenübersicht
 
-| Aufgabe                       | Status                                  | Nächster Schritt                   |
-| ----------------------------- | --------------------------------------- | ---------------------------------- |
-| 01 Engine-Spike & Architektur | erledigt                                | —                                  |
-| 02 Paketgerüst & Vertrag      | erledigt                                | —                                  |
-| 03 Session & Preact-Bindings  | erledigt                                | —                                  |
-| 04 Sortable & Transfers       | erledigt                                | —                                  |
-| 05 A11y, Touch, Tastatur      | erledigt (SR/Touch manuell offen)       | `docs/a11y-manual-checklist.md`    |
-| 06 Editor & Kanban            | erledigt                                | —                                  |
-| 07 Browser-Tests & Paket-QA   | erledigt                                | 24× Playwright, Performance-Docs   |
-| 08 Dokumentation & Beta       | erledigt                                | Checkliste aktualisiert            |
-| Beta-Härtung (Follow-up)      | erledigt                                | —                                  |
+| Aufgabe                       | Status                            | Nächster Schritt                 |
+| ----------------------------- | --------------------------------- | -------------------------------- |
+| 01 Engine-Spike & Architektur | erledigt                          | —                                |
+| 02 Paketgerüst & Vertrag      | erledigt                          | —                                |
+| 03 Session & Preact-Bindings  | erledigt                          | —                                |
+| 04 Sortable & Transfers       | erledigt                          | —                                |
+| 05 A11y, Touch, Tastatur      | erledigt (SR/Touch manuell offen) | `docs/a11y-manual-checklist.md`  |
+| 06 Editor & Kanban            | erledigt                          | —                                |
+| 07 Browser-Tests & Paket-QA   | erledigt                          | 24× Playwright, Performance-Docs |
+| 08 Dokumentation & Beta       | erledigt                          | Checkliste aktualisiert          |
+| Beta-Härtung (Follow-up)      | erledigt                          | —                                |
 
 ---
 
