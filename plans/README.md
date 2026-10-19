@@ -6,23 +6,23 @@ conditions, and update only its own status row when complete.
 
 ## Execution order and status
 
-| Plan | Title                                                        | Priority | Effort   | Depends on   | Status                                             |
-| ---- | ------------------------------------------------------------ | -------- | -------- | ------------ | -------------------------------------------------- |
-| 001  | Validate tree support and define a production-ready tree API | P2       | M        | —            | DONE                                               |
-| 002  | Ship `@kamod-ch/dnd/tree` with nested-target engine fix      | P2       | L        | 001          | DONE                                               |
-| 004  | Establish a green verification baseline and CI release gates | P1       | M        | —            | DONE                                               |
-| 005  | Keep `DndProvider` callbacks current across rerenders        | P1       | M        | 004          | DONE                                               |
-| 006  | Reject drops without a live target and cancel removed ones   | P1       | M        | 004          | DONE                                               |
-| 007  | Announce pointer and keyboard drag lifecycle accurately      | P1       | M        | 005, 006     | DONE                                               |
-| 008  | Keep the tree entry framework-free                           | P2       | S        | 004          | DONE                                               |
-| 009  | Isolate drag sessions between provider instances             | P1       | M        | 008          | DONE                                               |
-| 010  | Reconcile controlled data and suppress no-op commits         | P1       | M        | 008, 009     | DONE                                               |
-| 003  | First public release of `@kamod-ch/dnd` including `./tree`   | P2       | S        | 002, 004–010 | BLOCKED (awaiting fixes and publish authorization) |
-| 011  | Restore focus, labels, and complete device accessibility     | P1       | M+manual | 008–010      | TODO                                               |
-| 012  | Graduate tree support to production/full matrix              | P2       | L        | 008–011      | TODO                                               |
-| 013  | Evaluate a virtualization contract                           | P3       | M        | 008–011      | TODO                                               |
-| 014  | Evaluate horizontal, RTL, and grid strategies                | P3       | M–L      | 008–011      | TODO                                               |
-| 015  | Evaluate multi-select move semantics                         | P3       | M        | 008–011      | TODO                                               |
+| Plan | Title                                                        | Priority | Effort   | Depends on   | Status                                                                               |
+| ---- | ------------------------------------------------------------ | -------- | -------- | ------------ | ------------------------------------------------------------------------------------ |
+| 001  | Validate tree support and define a production-ready tree API | P2       | M        | —            | DONE                                                                                 |
+| 002  | Ship `@kamod-ch/dnd/tree` with nested-target engine fix      | P2       | L        | 001          | DONE                                                                                 |
+| 004  | Establish a green verification baseline and CI release gates | P1       | M        | —            | DONE                                                                                 |
+| 005  | Keep `DndProvider` callbacks current across rerenders        | P1       | M        | 004          | DONE                                                                                 |
+| 006  | Reject drops without a live target and cancel removed ones   | P1       | M        | 004          | DONE                                                                                 |
+| 007  | Announce pointer and keyboard drag lifecycle accurately      | P1       | M        | 005, 006     | DONE                                                                                 |
+| 008  | Keep the tree entry framework-free                           | P2       | S        | 004          | DONE                                                                                 |
+| 009  | Isolate drag sessions between provider instances             | P1       | M        | 008          | DONE                                                                                 |
+| 010  | Reconcile controlled data and suppress no-op commits         | P1       | M        | 008, 009     | DONE                                                                                 |
+| 003  | First public release of `@kamod-ch/dnd` including `./tree`   | P2       | S        | 002, 004–010 | BLOCKED (awaiting fixes and publish authorization)                                   |
+| 011  | Restore focus, labels, and complete device accessibility     | P1       | M+manual | 008–010      | BLOCKED (VoiceOver/Safari, NVDA/Firefox, iOS Safari, Android Chrome, reduced motion) |
+| 012  | Graduate tree support to production/full matrix              | P2       | L        | 008–011      | TODO                                                                                 |
+| 013  | Evaluate a virtualization contract                           | P3       | M        | 008–011      | TODO                                                                                 |
+| 014  | Evaluate horizontal, RTL, and grid strategies                | P3       | M–L      | 008–011      | TODO                                                                                 |
+| 015  | Evaluate multi-select move semantics                         | P3       | M        | 008–011      | TODO                                                                                 |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale)

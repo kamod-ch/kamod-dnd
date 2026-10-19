@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useState } from "preact/hooks";
 import { useDndContext } from "./context.js";
 import type { DndId, DndSessionSnapshot } from "../session/types.js";
 import {
@@ -42,6 +42,13 @@ export function useDraggable<TData>(args: {
   useEffect(() => {
     controller.updateItemRegistration({ id, containerId, data, disabled });
   }, [controller, id, containerId, data, disabled]);
+
+  useLayoutEffect(() => {
+    const handle = args.handleRef.current;
+    if (!handle) return;
+    controller.registerHandle(id, handle);
+    return () => controller.unregisterHandle(id, handle);
+  }, [controller, id, args.handleRef]);
 
   useEffect(() => {
     const element = args.itemRef.current;

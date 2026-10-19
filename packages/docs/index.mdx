@@ -30,10 +30,11 @@ Peer dependencies: `preact`, `@preact/signals`.
 
 ## What you get
 
-- **`DndProvider`** — instance-scoped controller, `onMove`, optional `dropRule`, `locale`, `scrollRef`
+- **`DndProvider`** — instance-scoped controller, `onMove`, optional `dropRule`, `locale`, label resolvers, `scrollRef`
 - **`useSortable` / `useSortableContainer`** — vertical lists and cross-container transfer
 - **`useDraggable` / `useDroppable`** — lower-level registration when you need custom layouts
 - **Keyboard moves** — `moveByKeyboard` on sortable items; escape cancels active drags
+- **Labels and focus** — optional `getItemLabel` / `getContainerLabel` (ids are the fallback). After an accepted move or cancel, focus returns to that item's handle on the second animation frame. Hover and rejected keyboard moves leave focus alone. Screen-reader and touch certification stays on the manual checklist; `@kamod-ch/dnd/tree` stays experimental until that passes.
 - **SSR-safe import** — mount `DndProvider` on the client only
 
 ## Next steps

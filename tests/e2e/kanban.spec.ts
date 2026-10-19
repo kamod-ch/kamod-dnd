@@ -11,6 +11,11 @@ test.describe("kanban board", () => {
   test("transfers a card into empty done column via keyboard", async ({ page }) => {
     await expect(page.getByTestId("empty-done")).toBeVisible();
     await page.getByTestId("move-c1-to-done").click();
+    await expect(page.getByTestId("handle-c1")).toBeFocused();
+    const status = page.getByRole("status");
+    await expect(status).toContainText("Write spec");
+    await expect(status).toContainText("Done");
+    await expect(status).not.toContainText("c1");
     await expect(page.getByTestId("card-c1")).toBeVisible();
     await expect(page.getByTestId("column-done").getByTestId("card-c1")).toBeVisible();
     await expect(page.getByTestId("column-todo").getByTestId("card-c1")).toHaveCount(0);
@@ -18,6 +23,7 @@ test.describe("kanban board", () => {
 
   test("drop rule rejects move to done when title contains blocked", async ({ page }) => {
     await page.getByTestId("move-c4-to-done").click();
+    await expect(page.getByTestId("handle-c4")).not.toBeFocused();
     await expect(page.getByTestId("column-todo").getByTestId("card-c4")).toBeVisible();
     await expect(page.getByTestId("column-done").getByTestId("card-c4")).toHaveCount(0);
   });

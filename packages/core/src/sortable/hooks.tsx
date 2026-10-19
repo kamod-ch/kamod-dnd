@@ -46,7 +46,8 @@ export type SortableItemProps<TData> = {
 export function useSortable<TData>(props: SortableItemProps<TData>) {
   const itemRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLButtonElement>(null);
-  const { controller, announce } = useDndContext<TData>();
+  const { controller, announce, itemLabel, containerLabel, restoreHandleFocus } =
+    useDndContext<TData>();
 
   useDraggable({
     itemRef,
@@ -87,11 +88,16 @@ export function useSortable<TData>(props: SortableItemProps<TData>) {
     });
     if (!intent) return;
     if (!controller.tryCommitMove(intent)) return;
+    restoreHandleFocus(props.id);
+    const item = itemLabel(props.id, props.data);
     if (intent.sourceContainerId === intent.targetContainerId) {
-      announce("moved", { item: props.id, position: String(intent.targetIndex + 1) });
+      announce("moved", { item, position: String(intent.targetIndex + 1) });
       return;
     }
-    announce("movedToContainer", { item: props.id, container: intent.targetContainerId });
+    announce("movedToContainer", {
+      item,
+      container: containerLabel(intent.targetContainerId),
+    });
   };
 
   return {

@@ -28,7 +28,11 @@ function App() {
   };
 
   return (
-    <DndProvider<Block> onMove={onMove} scrollRef={scrollRef}>
+    <DndProvider<Block>
+      onMove={onMove}
+      scrollRef={scrollRef}
+      getItemLabel={(_id, block) => block.body.split("\n")[0] ?? block.id}
+    >
       <div class="kp-theme" style={{ padding: 24, maxWidth: 720, margin: "0 auto" }}>
         <h1 data-testid="editor-title">Editor blocks</h1>
         <p>

@@ -9,6 +9,7 @@ test.describe("tree spike", () => {
   test("indent sibling under previous sibling and outdent back", async ({ page }) => {
     await expect(page.getByTestId("node-c2")).toHaveAttribute("data-parent", "rA");
     await page.getByTestId("kb-indent-c2").click();
+    await expect(page.getByTestId("handle-c2")).toBeFocused();
     await expect(page.getByTestId("node-c2")).toHaveAttribute("data-parent", "c1");
     await expect(page.getByTestId("last-reject")).toHaveText("Last reject: none");
 
@@ -46,6 +47,7 @@ test.describe("tree spike", () => {
     });
     await page.waitForTimeout(50);
     await page.mouse.up();
+    await expect(page.getByRole("status")).toContainText("Child 2");
     await expect(page.getByTestId("node-c2")).toHaveAttribute("data-parent", "c1");
     await expect(page.getByTestId("last-intent")).toContainText("accepted");
   });

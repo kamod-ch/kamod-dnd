@@ -59,7 +59,7 @@ pnpm docs:build
 
 ## API (MVP)
 
-- `DndProvider` — `onMove`, optional `dropRule`, `locale`, `scrollRef`, `reducedMotion`
+- `DndProvider` — `onMove`, optional `dropRule`, `locale`, `getItemLabel`, `getContainerLabel`, `focusFallbackRef`, `scrollRef`, `reducedMotion`
 - `useDndState`, `useDraggable`, `useDroppable`
 - `useSortable`, `useSortableContainer`, `applyMoveIntentToIds` from `@kamod-ch/dnd/sortable`
 - **`@kamod-ch/dnd/tree`** (opt-in) — helpers for container-per-parent hierarchies (`treeToContainers`, `applyTreeMove`, keyboard indent/outdent projection). Same `MoveIntent` contract; pair with separate row vs child-list refs (see `spikes/tree-spike`).
@@ -110,3 +110,11 @@ The application owns list state. During an active drag the library only checks t
 - Dropping an item on its current same-container index completes without calling `dropRule` or `onMove`.
 
 The library does not resolve server conflicts or keep a stale preview after one of these cancellations.
+
+## Accessible labels and focus
+
+Pass `getItemLabel(id, data)` and `getContainerLabel(id)` when announcements should speak human names. Without them, messages keep using the ids. Locale message functions are unchanged.
+
+After an accepted move or a cancellation, the provider focuses that item's handle on the second animation frame. The first frame lets Preact commit the controlled update and lets the browser release focus from a control that unmounted; the second frame reads the handle registry. Each provider keeps its own registry. Hover and a rejected keyboard move do not move focus. If the item is gone or disabled, an optional `focusFallbackRef` is focused when that element is still connected; otherwise the library leaves focus where the application put it.
+
+Automated tests cover this focus behavior. VoiceOver, NVDA, and real iOS/Android sessions are still open in [`docs/a11y-manual-checklist.md`](docs/a11y-manual-checklist.md). Tree support stays experimental until that matrix and the tree plan are done.

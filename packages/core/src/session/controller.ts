@@ -32,6 +32,7 @@ export class DndController<TData = unknown> {
   readonly #items = new Map<DndId, DndItemRegistration<TData>>();
   readonly #containers = new Map<DndId, DndContainerRegistration>();
   readonly #containerOrder = new Map<DndId, DndId[]>();
+  readonly #handles = new Map<DndId, HTMLElement>();
 
   readonly #options: DndControllerOptions<TData>;
   readonly #listeners = new Set<(event: DndSessionEvent<TData>) => void>();
@@ -145,7 +146,8 @@ export class DndController<TData = unknown> {
       this.cancel("external-data-change");
       return;
     }
-    this.#activeData.value = reg.data;
+    // Keep the latest payload on the registration. The active-data signal stays
+    // at drag start so a fresh data object cannot retrigger snapshot subscribers.
   }
 
   unregisterItem(id: DndId): void {
@@ -157,6 +159,22 @@ export class DndController<TData = unknown> {
 
   getItemData(id: DndId): TData | undefined {
     return this.#items.get(id)?.data;
+  }
+
+  registerHandle(id: DndId, element: HTMLElement): void {
+    this.#handles.set(id, element);
+  }
+
+  unregisterHandle(id: DndId, element: HTMLElement): void {
+    if (this.#handles.get(id) === element) this.#handles.delete(id);
+  }
+
+  focusHandle(id: DndId): boolean {
+    const element = this.#handles.get(id);
+    const item = this.#items.get(id);
+    if (!element || !element.isConnected || !item || item.disabled) return false;
+    element.focus();
+    return true;
   }
 
   getContainerIds(containerId: DndId): DndId[] {
@@ -317,6 +335,7 @@ export class DndController<TData = unknown> {
     this.#items.clear();
     this.#containers.clear();
     this.#containerOrder.clear();
+    this.#handles.clear();
     this.#listeners.clear();
   }
 

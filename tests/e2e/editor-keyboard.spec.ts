@@ -18,10 +18,28 @@ test.describe("editor keyboard moves", () => {
     expect(after.indexOf("block-b3")).toBeLessThan(before.indexOf("block-b3")!);
   });
 
-  test("handle stays focusable after keyboard move", async ({ page }) => {
+  test("restores handle focus and announces the block label", async ({ page }) => {
     await page.getByTestId("block-b2").getByRole("button", { name: "Down" }).click();
     const handle = page.getByTestId("handle-b2");
-    await handle.focus();
     await expect(handle).toBeFocused();
+    const status = page.getByRole("status");
+    await expect(status).toContainText("Paragraph with variable height.");
+    await expect(status).not.toContainText("b2");
+  });
+
+  test("escape restores the dragged handle", async ({ page }) => {
+    const handle = page.getByTestId("handle-b1");
+    const box = await handle.boundingBox();
+    expect(box).toBeTruthy();
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + 80, { steps: 12 });
+    await page.evaluate(() => {
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    });
+    await page.keyboard.press("Escape");
+    await expect(handle).toBeFocused();
+    await expect(page.getByRole("status")).toContainText("Chapter title");
+    await page.mouse.up();
   });
 });
