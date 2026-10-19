@@ -30,11 +30,23 @@ export function DndProvider<TData>({
   reducedMotion = false,
   ...options
 }: DndProviderProps<TData>) {
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   const controllerRef = useRef<DndController<TData> | null>(null);
-  const controller = controllerRef.current ?? new DndController<TData>(options);
   if (!controllerRef.current) {
-    controllerRef.current = controller;
+    controllerRef.current = new DndController<TData>({
+      dropRule: (intent) => {
+        const rule = optionsRef.current.dropRule;
+        return rule ? rule(intent) : true;
+      },
+      onMove: (intent) => optionsRef.current.onMove?.(intent),
+      onCancel: (reason) => {
+        optionsRef.current.onCancel?.(reason);
+      },
+    });
   }
+  const controller = controllerRef.current;
 
   const [liveMessage, setLiveMessage] = useState("");
 
@@ -57,10 +69,14 @@ export function DndProvider<TData>({
     });
     return () => {
       unbind();
-      controller.dispose();
-      controllerRef.current = null;
     };
   }, [controller, scrollRef]);
+
+  useEffect(() => {
+    return () => {
+      controller.dispose();
+    };
+  }, [controller]);
 
   return (
     <DndContext.Provider value={value as DndContextValue<unknown>}>
