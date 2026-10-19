@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <strong><a href="https://kamod-ch.github.io/kamod-dnd/">Docs</a></strong> ·
   <strong><a href="https://www.npmjs.com/package/@kamod-ch/dnd">npm</a></strong> ·
   <strong><a href="https://github.com/kamod-ch/kamod-dnd">GitHub</a></strong> ·
   <strong><a href="https://github.com/kamod-ch/kamod-dnd/issues">Issues</a></strong>
@@ -50,7 +51,7 @@ pnpm add @kamod-ch/dnd @preact/signals preact
 
 ## Documentation
 
-Interactive PreactPress examples and guides live in `packages/docs`:
+Interactive PreactPress examples and guides: **[kamod-ch.github.io/kamod-dnd](https://kamod-ch.github.io/kamod-dnd/)** (source in `packages/docs`).
 
 ```bash
 pnpm docs:dev    # http://localhost:5173
