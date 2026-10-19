@@ -38,10 +38,10 @@ This spike does not add virtualization to `@kamod-ch/dnd`. `packages/core/src/**
 
 Playwright Chromium 156.0.8078.4 (Desktop Chrome profile, 1280×900). Host: Linux 7.0.0-113038-tuxedo, 20 cores. One drag of `row-0` onto the mounted `row-3` handle after the live region names a new position. `longtask` entries longer than 50ms were recorded with `PerformanceObserver`; this Chromium reported none.
 
-| Rows | Mounted before | Mounted after | Row renders during the drag | Long tasks (ms) | Pointer down to up |
-| ---- | -------------- | ------------- | --------------------------- | --------------- | ------------------ |
-| 1000 | 19 | 19 | 96 | none | 58ms |
-| 10000 | 19 | 19 | 96 | none | 52ms |
+| Rows  | Mounted before | Mounted after | Row renders during the drag | Long tasks (ms) | Pointer down to up |
+| ----- | -------------- | ------------- | --------------------------- | --------------- | ------------------ |
+| 1000  | 19             | 19            | 96                          | none            | 58ms               |
+| 10000 | 19             | 19            | 96                          | none            | 52ms               |
 
 Row renders count every render of a mounted row, including hover updates. They do not grow with list length. These numbers are one Chromium run of `e2e/metrics.spec.ts`, not a statistical claim.
 
