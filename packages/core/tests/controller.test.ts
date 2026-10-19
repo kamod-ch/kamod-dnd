@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { DndController } from "../src/session/controller.js";
+import type { DndSessionEvent } from "../src/session/types.js";
 import { applyMoveIntentToIds } from "../src/sortable/hooks.js";
 import { buildMoveIntent, isNoOpMove } from "../src/sortable/move-helpers.js";
 
@@ -240,6 +241,104 @@ describe("DndController", () => {
       data: { n: 1 },
     });
     expect(controller.tryCommitMove(intent)).toBe(false);
+  });
+});
+
+describe("session events", () => {
+  function setupList(controller: DndController<{ n: number }>, ids: string[]) {
+    controller.registerContainer({ id: "list" });
+    controller.setContainerOrder("list", ids);
+    for (const id of ids) {
+      controller.registerItem({ id, containerId: "list", data: { n: 1 } });
+    }
+  }
+
+  function eventsFor(controller: DndController<{ n: number }>) {
+    const events: DndSessionEvent<{ n: number }>[] = [];
+    const unsubscribe = controller.subscribe((event) => {
+      events.push(event);
+    });
+    return { events, unsubscribe };
+  }
+
+  it("emits start, over, and drop with the active item before reset", () => {
+    const controller = new DndController<{ n: number }>();
+    const { events } = eventsFor(controller);
+    setupList(controller, ["a", "b"]);
+    controller.handleDragStart("a");
+    controller.handleDragOver({ overId: "b", overContainerId: "list", edge: "top" });
+    controller.handleDragOver({ overId: "b", overContainerId: "list", edge: "top" });
+    controller.handleDrop();
+    expect(events.map((event) => event.type)).toEqual(["start", "over", "drop"]);
+    expect(events[0]).toMatchObject({ type: "start", itemId: "a" });
+    expect(events[1]).toMatchObject({
+      type: "over",
+      itemId: "a",
+      containerId: "list",
+      sourceContainerId: "list",
+    });
+    expect(events[2]).toMatchObject({ type: "drop", intent: { itemId: "a" } });
+    expect(controller.readSnapshot().activeId).toBeNull();
+  });
+
+  it("emits cancel with the active item and no drop when the move is rejected", () => {
+    const controller = new DndController<{ n: number }>({ dropRule: () => false });
+    const { events } = eventsFor(controller);
+    setupList(controller, ["a", "b"]);
+    controller.handleDragStart("a");
+    controller.handleDragOver({ overId: "b", overContainerId: "list", edge: "bottom" });
+    controller.handleDrop();
+    expect(events.map((event) => event.type)).toEqual(["start", "over", "cancel"]);
+    expect(events.at(-1)).toMatchObject({ type: "cancel", itemId: "a", reason: "rejected" });
+    expect(controller.readSnapshot().phase).toBe("idle");
+  });
+
+  it("emits cancel before reset when the drag is cancelled", () => {
+    const controller = new DndController<{ n: number }>();
+    const seen: Array<string | null> = [];
+    controller.subscribe((event) => {
+      if (event.type === "cancel") {
+        seen.push(controller.readSnapshot().activeId);
+      }
+    });
+    setupList(controller, ["a"]);
+    controller.handleDragStart("a");
+    controller.cancel("escape");
+    expect(seen).toEqual(["a"]);
+  });
+
+  it("does not deliver events after unsubscribe or dispose", () => {
+    const controller = new DndController<{ n: number }>();
+    const { events, unsubscribe } = eventsFor(controller);
+    setupList(controller, ["a"]);
+    unsubscribe();
+    controller.handleDragStart("a");
+    expect(events).toEqual([]);
+
+    const retained = new DndController<{ n: number }>();
+    const heard = eventsFor(retained);
+    setupList(retained, ["a"]);
+    retained.handleDragStart("a");
+    retained.dispose();
+    setupList(retained, ["a"]);
+    retained.handleDragStart("a");
+    expect(heard.events.map((event) => event.type)).toEqual(["start", "cancel"]);
+  });
+
+  it("isolates a throwing listener so the session still resets", () => {
+    const controller = new DndController<{ n: number }>();
+    const heard: string[] = [];
+    controller.subscribe(() => {
+      throw new Error("listener failed");
+    });
+    controller.subscribe((event) => {
+      heard.push(event.type);
+    });
+    setupList(controller, ["a"]);
+    controller.handleDragStart("a");
+    controller.cancel("escape");
+    expect(heard).toEqual(["start", "cancel"]);
+    expect(controller.readSnapshot().phase).toBe("idle");
   });
 });
 

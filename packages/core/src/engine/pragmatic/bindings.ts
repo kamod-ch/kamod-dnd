@@ -16,7 +16,6 @@ import { CONTAINER_TYPE, ITEM_TYPE } from "./types.js";
 
 export type EngineBindingOptions = {
   scrollElement?: HTMLElement | null;
-  onEscape?: () => void;
 };
 
 export function bindPragmaticEngine<TData>(
@@ -58,7 +57,6 @@ export function bindPragmaticEngine<TData>(
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
       controller.cancel("escape");
-      options.onEscape?.();
     }
   };
   window.addEventListener("keydown", onKeyDown);

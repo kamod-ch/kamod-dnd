@@ -12,6 +12,31 @@ export type CancelReason =
   | "external-data-change"
   | "disabled";
 
+export type DndSessionEvent<TData = unknown> =
+  | {
+      readonly type: "start";
+      readonly itemId: DndId;
+      readonly data: TData;
+    }
+  | {
+      readonly type: "over";
+      readonly itemId: DndId;
+      readonly sourceContainerId: DndId;
+      readonly containerId: DndId;
+      readonly targetIndex: number;
+      readonly overId: DndId | null;
+      readonly canDrop: boolean;
+    }
+  | {
+      readonly type: "drop";
+      readonly intent: MoveIntent<TData>;
+    }
+  | {
+      readonly type: "cancel";
+      readonly itemId: DndId;
+      readonly reason: CancelReason;
+    };
+
 export type MoveIntent<TData = unknown> = {
   readonly kind: "move";
   readonly itemId: DndId;

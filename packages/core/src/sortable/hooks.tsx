@@ -86,7 +86,11 @@ export function useSortable<TData>(props: SortableItemProps<TData>) {
     });
     if (!intent) return;
     if (!controller.tryCommitMove(intent)) return;
-    announce("moved", { item: props.id, position: String(intent.targetIndex) });
+    if (intent.sourceContainerId === intent.targetContainerId) {
+      announce("moved", { item: props.id, position: String(intent.targetIndex + 1) });
+      return;
+    }
+    announce("movedToContainer", { item: props.id, container: intent.targetContainerId });
   };
 
   return {

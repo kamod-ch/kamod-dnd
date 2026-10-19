@@ -2,6 +2,7 @@ import { createContext } from "preact";
 import { useContext, useEffect, useRef, useState } from "preact/hooks";
 import type { ComponentChildren, RefObject } from "preact";
 import { DndController, type DndControllerOptions } from "../session/controller.js";
+import type { DndSessionEvent } from "../session/types.js";
 import { bindPragmaticEngine } from "../engine/pragmatic/bindings.js";
 import type { DndLocale } from "../accessibility/messages.js";
 import { resolveMessage, type DndMessageKey } from "../accessibility/messages.js";
@@ -22,6 +23,41 @@ export type DndContextValue<TData> = {
 };
 
 const DndContext = createContext<DndContextValue<unknown> | null>(null);
+
+function announceSessionEvent<TData>(
+  locale: DndLocale | undefined,
+  event: DndSessionEvent<TData>,
+  setLiveMessage: (message: string) => void,
+) {
+  if (event.type === "start") {
+    setLiveMessage(resolveMessage(locale, "pickedUp", { item: event.itemId }));
+    return;
+  }
+  if (event.type === "over") {
+    if (!event.canDrop) return;
+    if (event.containerId === event.sourceContainerId) {
+      setLiveMessage(
+        resolveMessage(locale, "moved", {
+          item: event.itemId,
+          position: String(event.targetIndex + 1),
+        }),
+      );
+      return;
+    }
+    setLiveMessage(
+      resolveMessage(locale, "movedToContainer", {
+        item: event.itemId,
+        container: event.containerId,
+      }),
+    );
+    return;
+  }
+  if (event.type === "drop") {
+    setLiveMessage(resolveMessage(locale, "dropped", { item: event.intent.itemId }));
+    return;
+  }
+  setLiveMessage(resolveMessage(locale, "cancelled", { item: event.itemId }));
+}
 
 export function DndProvider<TData>({
   children,
@@ -48,10 +84,13 @@ export function DndProvider<TData>({
   }
   const controller = controllerRef.current;
 
+  const localeRef = useRef(locale);
+  localeRef.current = locale;
+
   const [liveMessage, setLiveMessage] = useState("");
 
   const announce = (key: DndMessageKey, args: Record<string, string>) => {
-    setLiveMessage(resolveMessage(locale, key, args));
+    setLiveMessage(resolveMessage(localeRef.current, key, args));
   };
 
   const value: DndContextValue<TData> = {
@@ -63,19 +102,21 @@ export function DndProvider<TData>({
 
   useEffect(() => {
     const scrollEl = scrollRef?.current ?? null;
-    const unbind = bindPragmaticEngine(controller, {
+    return bindPragmaticEngine(controller, {
       scrollElement: scrollEl,
-      onEscape: () => announce("cancelled", { item: controller.signals.activeId.value ?? "item" }),
     });
-    return () => {
-      unbind();
-    };
   }, [controller, scrollRef]);
 
   useEffect(() => {
     return () => {
       controller.dispose();
     };
+  }, [controller]);
+
+  useEffect(() => {
+    return controller.subscribe((event) => {
+      announceSessionEvent(localeRef.current, event, setLiveMessage);
+    });
   }, [controller]);
 
   return (

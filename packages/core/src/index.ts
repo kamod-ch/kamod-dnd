@@ -2,6 +2,7 @@ export type {
   CancelReason,
   DndId,
   DndPhase,
+  DndSessionEvent,
   DndSessionSnapshot,
   DropRule,
   DropRuleContext,
