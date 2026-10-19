@@ -62,7 +62,7 @@ pnpm docs:build
 - `DndProvider` — `onMove`, optional `dropRule`, `locale`, `getItemLabel`, `getContainerLabel`, `focusFallbackRef`, `scrollRef`, `reducedMotion`
 - `useDndState`, `useDraggable`, `useDroppable`
 - `useSortable`, `useSortableContainer`, `applyMoveIntentToIds` from `@kamod-ch/dnd/sortable`
-- **`@kamod-ch/dnd/tree`** (opt-in) — helpers for container-per-parent hierarchies (`treeToContainers`, `applyTreeMove`, keyboard indent/outdent projection). Same `MoveIntent` contract; pair with separate row vs child-list refs (see `spikes/tree-spike`).
+- **`@kamod-ch/dnd/tree`** (opt-in, experimental) — helpers for container-per-parent hierarchies (`treeToContainers`, `applyTreeMove`, keyboard indent/outdent projection). Same `MoveIntent` contract; pair with separate row vs child-list refs (see `examples/tree`).
 - Target index is **after removing** the item from the source container.
 
 ## Examples
@@ -71,6 +71,7 @@ pnpm docs:build
 pnpm install
 pnpm --filter @kamod-dnd/example-editor-blocks dev
 pnpm --filter @kamod-dnd/example-kanban dev
+pnpm --filter @kamod-dnd/example-tree dev
 ```
 
 Vite demos use `@kamod-ch/themes/theme.css` and `@kamod-ch/ui/button` where helpful.
@@ -85,7 +86,7 @@ Safe to import the package without DOM; mount `DndProvider` only on the client.
 | -------------------- | ----------------------------------------------------------------- |
 | `pnpm check`         | normal gate: typecheck, format, lint, test, build, docs integrity |
 | `pnpm check:release` | full gate: check, docs build, browser, tree, packed consumer      |
-| `pnpm test:browser`  | Playwright against editor and Kanban examples                     |
+| `pnpm test:browser`  | Playwright against editor, Kanban, and tree examples              |
 | `pnpm docs:dev`      | PreactPress docs + live demos                                     |
 | `pnpm qa:tarball`    | pack + isolated consumer smoke                                    |
 
@@ -95,7 +96,7 @@ Safe to import the package without DOM; mount `DndProvider` only on the client.
 
 **Not in MVP:** grids, virtualization, file/cross-window DnD.
 
-**Trees (opt-in):** import `@kamod-ch/dnd/tree` and model each parent’s children as a container id. Pointer reparent uses nested drop-target selection in the engine; touch and screen-reader certification are still manual ([`docs/a11y-manual-checklist.md`](docs/a11y-manual-checklist.md), [`docs/tree-evaluation.md`](docs/tree-evaluation.md)).
+**Trees (opt-in, experimental):** import `@kamod-ch/dnd/tree` and model each parent’s children as a container id. `examples/tree` is the browser reference, including a 900ms collapsed-parent hover recipe owned by the example. Flattened and virtualized trees are unsupported. Touch and screen-reader certification are still manual ([`docs/a11y-manual-checklist.md`](docs/a11y-manual-checklist.md), [`docs/tree-evaluation.md`](docs/tree-evaluation.md)).
 
 Manual verification for touch devices and screen readers: [`docs/a11y-manual-checklist.md`](docs/a11y-manual-checklist.md).
 

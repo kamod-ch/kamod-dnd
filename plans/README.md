@@ -19,7 +19,7 @@ conditions, and update only its own status row when complete.
 | 010  | Reconcile controlled data and suppress no-op commits         | P1       | M        | 008, 009     | DONE                                                                                 |
 | 003  | First public release of `@kamod-ch/dnd` including `./tree`   | P2       | S        | 002, 004–010 | BLOCKED (awaiting fixes and publish authorization)                                   |
 | 011  | Restore focus, labels, and complete device accessibility     | P1       | M+manual | 008–010      | BLOCKED (VoiceOver/Safari, NVDA/Firefox, iOS Safari, Android Chrome, reduced motion) |
-| 012  | Graduate tree support to production/full matrix              | P2       | L        | 008–011      | TODO                                                                                 |
+| 012  | Graduate tree support to production/full matrix              | P2       | L        | 008–011      | BLOCKED (VoiceOver/NVDA/iOS/Android tree certification unavailable)                  |
 | 013  | Evaluate a virtualization contract                           | P3       | M        | 008–011      | TODO                                                                                 |
 | 014  | Evaluate horizontal, RTL, and grid strategies                | P3       | M–L      | 008–011      | TODO                                                                                 |
 | 015  | Evaluate multi-select move semantics                         | P3       | M        | 008–011      | TODO                                                                                 |

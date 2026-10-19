@@ -103,3 +103,9 @@ Plan 002 shipped:
 - **`pnpm test:browser`**: 24/24 pass (editor + kanban, Chromium/Firefox/WebKit).
 
 Trees are **opt-in** via `@kamod-ch/dnd/tree`. Touch/SR certification and multi-browser tree matrix remain follow-ups before a public “full tree a11y” claim.
+
+## Plan 012 addendum (2026-10-19)
+
+`examples/tree` is now the browser reference and is covered by `tests/e2e/tree.spec.ts` on Chromium, Firefox, and WebKit: indent/outdent, empty parent, cycle rejection, pointer reparent, focus, human labels, provider isolation, collapsed-parent expand after 900ms, cancellation when the pointer leaves, and cancellation when the current target collapses.
+
+The hover recipe lives in the example. Flattened and virtualized trees stay unsupported. Stable tree status is **blocked** until VoiceOver/Safari, NVDA/Firefox, iOS Safari, and Android Chrome are run against this example. `@kamod-ch/dnd/tree` stays experimental.
