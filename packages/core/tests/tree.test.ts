@@ -1,4 +1,4 @@
-import type { MoveIntent } from "@kamod-ch/dnd";
+import type { MoveIntent } from "../src/index.js";
 import { describe, expect, it } from "vitest";
 import {
   applyTreeMove,

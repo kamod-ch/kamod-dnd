@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm --filter @kamod-ch/dnd build",
-    "typecheck": "pnpm --filter @kamod-ch/dnd typecheck && pnpm --filter './examples/*' typecheck && pnpm --filter './spikes/*' typecheck && pnpm --filter @kamod-ch/dnd-docs typecheck",
+    "typecheck": "pnpm --filter @kamod-ch/dnd typecheck && pnpm --filter @kamod-ch/dnd build && pnpm --filter './examples/*' typecheck && pnpm --filter './spikes/*' typecheck && pnpm --filter @kamod-ch/dnd-docs typecheck",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
     "format": "oxfmt .",
