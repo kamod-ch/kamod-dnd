@@ -71,9 +71,15 @@ export class DndController<TData = unknown> {
   }
 
   unregisterContainer(id: DndId): void {
+    const activeId = this.#activeId.value;
+    const activeItem = activeId ? this.#items.get(activeId) : undefined;
+    const removesLiveTarget =
+      activeItem?.containerId === id ||
+      this.#overContainerId.value === id ||
+      this.#previewContainerId.value === id;
     this.#containers.delete(id);
     this.#containerOrder.delete(id);
-    if (this.#activeId.value && this.#items.get(this.#activeId.value)?.containerId === id) {
+    if (activeId && removesLiveTarget) {
       this.cancel("target-removed");
     }
   }
@@ -146,6 +152,15 @@ export class DndController<TData = unknown> {
     this.#canDrop.value = allowed;
   }
 
+  clearDragTarget(): void {
+    if (this.#phase.value !== "dragging") return;
+    this.#overId.value = null;
+    this.#overContainerId.value = null;
+    this.#previewContainerId.value = null;
+    this.#previewIndex.value = null;
+    this.#canDrop.value = false;
+  }
+
   handleDrop(): void {
     if (this.#phase.value !== "dragging") return;
     const activeId = this.#activeId.value;
@@ -155,8 +170,17 @@ export class DndController<TData = unknown> {
       this.cancel("source-removed");
       return;
     }
-    const targetContainer = this.#previewContainerId.value ?? item.containerId;
-    const targetIndex = this.#previewIndex.value ?? 0;
+    const targetContainer = this.#previewContainerId.value;
+    const targetIndex = this.#previewIndex.value;
+    if (targetContainer === null || targetIndex === null) {
+      this.cancel("pointer-cancel");
+      return;
+    }
+    const container = this.#containers.get(targetContainer);
+    if (!container || container.disabled) {
+      this.cancel("target-removed");
+      return;
+    }
 
     const intent = buildMoveIntent({
       itemId: activeId,

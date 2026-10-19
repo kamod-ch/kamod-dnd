@@ -34,6 +34,7 @@ export function bindPragmaticEngine<TData>(
       onDrag: ({ location }) => {
         const target = pickActiveDropTarget(location.current.dropTargets);
         if (!target) {
+          controller.clearDragTarget();
           return;
         }
         const isContainer = target.data.type === CONTAINER_TYPE;

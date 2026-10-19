@@ -75,6 +75,158 @@ describe("DndController", () => {
     expect(controller.readSnapshot().phase).toBe("idle");
   });
 
+  it("cancels a drop that never hovered a target", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove, onCancel });
+    setupList(controller, ["a", "b"]);
+    controller.handleDragStart("a");
+    controller.handleDrop();
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledWith("pointer-cancel");
+    expect(controller.readSnapshot().phase).toBe("idle");
+  });
+
+  it("clears a stale preview when every target is left", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove, onCancel });
+    setupList(controller, ["a", "b"]);
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: "b",
+      overContainerId: "list",
+      edge: "bottom",
+    });
+    controller.clearDragTarget();
+    const snapshot = controller.readSnapshot();
+    expect(snapshot.phase).toBe("dragging");
+    expect(snapshot.overId).toBeNull();
+    expect(snapshot.overContainerId).toBeNull();
+    expect(snapshot.previewContainerId).toBeNull();
+    expect(snapshot.previewIndex).toBeNull();
+    expect(snapshot.canDrop).toBe(false);
+    controller.handleDrop();
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledWith("pointer-cancel");
+  });
+
+  it("cancels once when the current target container is removed", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove, onCancel });
+    controller.registerContainer({ id: "list" });
+    controller.registerContainer({ id: "other" });
+    controller.setContainerOrder("list", ["a"]);
+    controller.setContainerOrder("other", ["c"]);
+    controller.registerItem({ id: "a", containerId: "list", data: { n: 1 } });
+    controller.registerItem({ id: "c", containerId: "other", data: { n: 1 } });
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: "c",
+      overContainerId: "other",
+      edge: "bottom",
+    });
+    controller.unregisterContainer("other");
+    controller.handleDrop();
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledWith("target-removed");
+    expect(controller.readSnapshot().phase).toBe("idle");
+  });
+
+  it("does not commit after the active source item is removed", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove, onCancel });
+    setupList(controller, ["a"]);
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: "a",
+      overContainerId: "list",
+      edge: "bottom",
+    });
+    controller.unregisterItem("a");
+    controller.handleDrop();
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledWith("source-removed");
+  });
+
+  it("does not commit after the source container is removed", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove, onCancel });
+    setupList(controller, ["a", "b"]);
+    controller.handleDragStart("a");
+    controller.unregisterContainer("list");
+    controller.handleDrop();
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledWith("target-removed");
+  });
+
+  it("commits once after leaving targets and re-entering a valid one", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove, onCancel });
+    setupList(controller, ["a", "b"]);
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: "b",
+      overContainerId: "list",
+      edge: "bottom",
+    });
+    controller.clearDragTarget();
+    controller.handleDragOver({
+      overId: "b",
+      overContainerId: "list",
+      edge: "bottom",
+    });
+    controller.handleDrop();
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(controller.readSnapshot().phase).toBe("idle");
+  });
+
+  it("cancels when the preview container is missing or disabled at commit", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const dropRule = vi.fn(() => true);
+    const controller = new DndController<{ n: number }>({ onMove, onCancel, dropRule });
+    setupList(controller, ["a", "b"]);
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: null,
+      overContainerId: "missing",
+      edge: "bottom",
+    });
+    dropRule.mockClear();
+    controller.handleDrop();
+    expect(dropRule).not.toHaveBeenCalled();
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledWith("target-removed");
+
+    const disabled = new DndController<{ n: number }>({ onMove, onCancel, dropRule });
+    setupList(disabled, ["a", "b"]);
+    disabled.registerContainer({ id: "other" });
+    disabled.setContainerOrder("other", []);
+    disabled.handleDragStart("a");
+    disabled.handleDragOver({
+      overId: null,
+      overContainerId: "other",
+      edge: "bottom",
+    });
+    disabled.registerContainer({ id: "other", disabled: true });
+    disabled.handleDrop();
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(2);
+    expect(onCancel).toHaveBeenLastCalledWith("target-removed");
+  });
+
   it("tryCommitMove returns false when dropRule rejects", () => {
     const controller = new DndController<{ n: number }>({
       dropRule: () => false,

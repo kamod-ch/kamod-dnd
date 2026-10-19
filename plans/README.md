@@ -13,7 +13,7 @@ done.
 | 002  | Ship `@kamod-ch/dnd/tree` with nested-target engine fix      | P2       | L      | 001          | DONE                                               |
 | 004  | Establish a green verification baseline and CI release gates | P1       | M      | —            | DONE                                               |
 | 005  | Keep `DndProvider` callbacks current across rerenders        | P1       | M      | 004          | DONE                                               |
-| 006  | Reject drops without a live target and cancel removed ones   | P1       | M      | 004          | TODO                                               |
+| 006  | Reject drops without a live target and cancel removed ones   | P1       | M      | 004          | DONE                                               |
 | 007  | Announce pointer and keyboard drag lifecycle accurately      | P1       | M      | 005, 006     | TODO                                               |
 | 008  | Keep the tree entry framework-free                           | P2       | S      | 004          | TODO                                               |
 | 003  | First public release of `@kamod-ch/dnd` including `./tree`   | P2       | S      | 002, 004–008 | BLOCKED (awaiting fixes and publish authorization) |
