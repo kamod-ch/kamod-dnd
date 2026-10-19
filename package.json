@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm --filter @kamod-ch/dnd build",
-    "typecheck": "pnpm --filter @kamod-ch/dnd typecheck && pnpm --filter './examples/*' typecheck && pnpm --filter './spikes/*' typecheck",
+    "typecheck": "pnpm --filter @kamod-ch/dnd typecheck && pnpm --filter './examples/*' typecheck && pnpm --filter './spikes/*' typecheck && pnpm --filter @kamod-ch/dnd-docs typecheck",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
     "format": "oxfmt .",
@@ -15,7 +15,9 @@
     "test": "pnpm --filter @kamod-ch/dnd test",
     "test:browser": "playwright test",
     "test:browser:install": "playwright install chromium firefox webkit",
-    "check": "pnpm typecheck && pnpm format:check && pnpm lint && pnpm test && pnpm build",
+    "test:tree-browser": "pnpm --filter @kamod-dnd/spike-tree test:e2e",
+    "check": "pnpm typecheck && pnpm format:check && pnpm lint && pnpm test && pnpm build && pnpm docs:check",
+    "check:release": "pnpm check && pnpm docs:build && pnpm test:browser && pnpm test:tree-browser && pnpm qa:tarball",
     "spike:build": "pnpm --filter './spikes/*' build",
     "examples:build": "pnpm --filter './examples/*' build",
     "qa:tarball": "node scripts/qa-tarball-consumer.mjs",
@@ -23,6 +25,7 @@
     "size:report": "node scripts/bundle-size-report.mjs",
     "docs:dev": "pnpm --filter @kamod-ch/dnd-docs dev",
     "docs:build": "pnpm --filter @kamod-ch/dnd-docs build",
+    "docs:check": "pnpm --filter @kamod-ch/dnd-docs check",
     "brand:readme": "kamod-brand-readme --product DnD --output .github/assets"
   },
   "devDependencies": {

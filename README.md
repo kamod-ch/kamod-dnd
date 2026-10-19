@@ -81,12 +81,13 @@ Safe to import the package without DOM; mount `DndProvider` only on the client.
 
 ## Development
 
-| Command             | Purpose                              |
-| ------------------- | ------------------------------------ |
-| `pnpm check`        | typecheck, format, lint, test, build |
-| `pnpm test:browser` | Playwright against editor example    |
-| `pnpm docs:dev`     | PreactPress docs + live demos        |
-| `pnpm qa:tarball`   | pack + isolated consumer smoke       |
+| Command              | Purpose                                                           |
+| -------------------- | ----------------------------------------------------------------- |
+| `pnpm check`         | normal gate: typecheck, format, lint, test, build, docs integrity |
+| `pnpm check:release` | full gate: check, docs build, browser, tree, packed consumer      |
+| `pnpm test:browser`  | Playwright against editor and Kanban examples                     |
+| `pnpm docs:dev`      | PreactPress docs + live demos                                     |
+| `pnpm qa:tarball`    | pack + isolated consumer smoke                                    |
 
 ## Scope
 
