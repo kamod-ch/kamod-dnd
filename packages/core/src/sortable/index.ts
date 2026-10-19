@@ -5,5 +5,6 @@ export {
   transferId,
   isNoOpMove,
 } from "./move-helpers.js";
-export { applyMoveIntentToIds, useSortable, useSortableContainer } from "./hooks.js";
+export { applyMoveIntentToIds } from "./apply-move.js";
+export { useSortable, useSortableContainer } from "./hooks.js";
 export type { SortableContainerProps, SortableItemProps } from "./hooks.js";

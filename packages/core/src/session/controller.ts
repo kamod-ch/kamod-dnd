@@ -5,6 +5,7 @@ import type {
   DndId,
   DndItemRegistration,
   DndPhase,
+  DndSessionEvent,
   DndSessionSnapshot,
   DropRule,
   MoveIntent,
@@ -33,9 +34,30 @@ export class DndController<TData = unknown> {
   readonly #containerOrder = new Map<DndId, DndId[]>();
 
   readonly #options: DndControllerOptions<TData>;
+  readonly #listeners = new Set<(event: DndSessionEvent<TData>) => void>();
+  #lastOverKey: string | null = null;
 
   constructor(options: DndControllerOptions<TData> = {}) {
     this.#options = options;
+  }
+
+  subscribe(listener: (event: DndSessionEvent<TData>) => void): () => void {
+    this.#listeners.add(listener);
+    return () => {
+      this.#listeners.delete(listener);
+    };
+  }
+
+  #emit(event: DndSessionEvent<TData>): void {
+    const snapshot: Array<(event: DndSessionEvent<TData>) => void> = [];
+    for (const listener of this.#listeners) snapshot.push(listener);
+    for (const listener of snapshot) {
+      try {
+        listener(event);
+      } catch {
+        // A listener must not block reset or the remaining listeners.
+      }
+    }
   }
 
   readSnapshot(): DndSessionSnapshot<TData> {
@@ -71,9 +93,15 @@ export class DndController<TData = unknown> {
   }
 
   unregisterContainer(id: DndId): void {
+    const activeId = this.#activeId.value;
+    const activeItem = activeId ? this.#items.get(activeId) : undefined;
+    const removesLiveTarget =
+      activeItem?.containerId === id ||
+      this.#overContainerId.value === id ||
+      this.#previewContainerId.value === id;
     this.#containers.delete(id);
     this.#containerOrder.delete(id);
-    if (this.#activeId.value && this.#items.get(this.#activeId.value)?.containerId === id) {
+    if (activeId && removesLiveTarget) {
       this.cancel("target-removed");
     }
   }
@@ -107,6 +135,8 @@ export class DndController<TData = unknown> {
     this.#phase.value = "dragging";
     this.#activeId.value = itemId;
     this.#activeData.value = item.data;
+    this.#lastOverKey = null;
+    this.#emit({ type: "start", itemId, data: item.data });
   }
 
   handleDragOver(args: { overId: DndId | null; overContainerId: DndId; edge: Edge | null }): void {
@@ -144,6 +174,29 @@ export class DndController<TData = unknown> {
 
     const allowed = this.#options.dropRule ? this.#options.dropRule(intent) : true;
     this.#canDrop.value = allowed;
+
+    const overKey = `${args.overContainerId}\0${targetIndex}\0${allowed}`;
+    if (overKey === this.#lastOverKey) return;
+    this.#lastOverKey = overKey;
+    this.#emit({
+      type: "over",
+      itemId: activeId,
+      sourceContainerId: item.containerId,
+      containerId: args.overContainerId,
+      targetIndex,
+      overId: args.overId,
+      canDrop: allowed,
+    });
+  }
+
+  clearDragTarget(): void {
+    if (this.#phase.value !== "dragging") return;
+    this.#overId.value = null;
+    this.#overContainerId.value = null;
+    this.#previewContainerId.value = null;
+    this.#previewIndex.value = null;
+    this.#canDrop.value = false;
+    this.#lastOverKey = null;
   }
 
   handleDrop(): void {
@@ -155,8 +208,17 @@ export class DndController<TData = unknown> {
       this.cancel("source-removed");
       return;
     }
-    const targetContainer = this.#previewContainerId.value ?? item.containerId;
-    const targetIndex = this.#previewIndex.value ?? 0;
+    const targetContainer = this.#previewContainerId.value;
+    const targetIndex = this.#previewIndex.value;
+    if (targetContainer === null || targetIndex === null) {
+      this.cancel("pointer-cancel");
+      return;
+    }
+    const container = this.#containers.get(targetContainer);
+    if (!container || container.disabled) {
+      this.cancel("target-removed");
+      return;
+    }
 
     const intent = buildMoveIntent({
       itemId: activeId,
@@ -178,13 +240,18 @@ export class DndController<TData = unknown> {
       this.cancel("rejected");
       return;
     }
+    this.#emit({ type: "drop", intent });
     this.reset();
   }
 
   cancel(reason: CancelReason): void {
     if (this.#phase.value === "idle") return;
+    const itemId = this.#activeId.value;
     this.#phase.value = "cancelled";
     this.#options.onCancel?.(reason);
+    if (itemId) {
+      this.#emit({ type: "cancel", itemId, reason });
+    }
     this.reset();
   }
 
@@ -205,6 +272,7 @@ export class DndController<TData = unknown> {
     this.#previewIndex.value = null;
     this.#previewContainerId.value = null;
     this.#activeData.value = null;
+    this.#lastOverKey = null;
   }
 
   dispose(): void {
@@ -212,5 +280,6 @@ export class DndController<TData = unknown> {
     this.#items.clear();
     this.#containers.clear();
     this.#containerOrder.clear();
+    this.#listeners.clear();
   }
 }

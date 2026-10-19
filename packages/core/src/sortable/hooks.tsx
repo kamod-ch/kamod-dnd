@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "preact/hooks";
 import { useDndContext } from "../preact/context.js";
 import { useDraggable, useDroppable, useDndState } from "../preact/hooks.js";
-import type { DndId, MoveIntent } from "../session/types.js";
-import { transferId } from "./move-helpers.js";
+import type { DndId } from "../session/types.js";
 import { computeKeyboardMove, type KeyboardMoveAction } from "../accessibility/keyboard.js";
+
+export { applyMoveIntentToIds } from "./apply-move.js";
 
 export type SortableContainerProps = {
   id: DndId;
@@ -86,7 +87,11 @@ export function useSortable<TData>(props: SortableItemProps<TData>) {
     });
     if (!intent) return;
     if (!controller.tryCommitMove(intent)) return;
-    announce("moved", { item: props.id, position: String(intent.targetIndex) });
+    if (intent.sourceContainerId === intent.targetContainerId) {
+      announce("moved", { item: props.id, position: String(intent.targetIndex + 1) });
+      return;
+    }
+    announce("movedToContainer", { item: props.id, container: intent.targetContainerId });
   };
 
   return {
@@ -95,33 +100,5 @@ export function useSortable<TData>(props: SortableItemProps<TData>) {
     isDragging,
     isOver,
     moveByKeyboard,
-  };
-}
-
-export function applyMoveIntentToIds(
-  containers: Record<DndId, DndId[]>,
-  intent: MoveIntent,
-): Record<DndId, DndId[]> {
-  const source = containers[intent.sourceContainerId] ?? [];
-  const target = containers[intent.targetContainerId] ?? [];
-  if (intent.sourceContainerId === intent.targetContainerId) {
-    const from = source.indexOf(intent.itemId);
-    if (from < 0) return containers;
-    const next = [...source];
-    next.splice(from, 1);
-    const insertAt = Math.max(0, Math.min(intent.targetIndex, next.length));
-    next.splice(insertAt, 0, intent.itemId);
-    return { ...containers, [intent.sourceContainerId]: next };
-  }
-  const { source: nextSource, target: nextTarget } = transferId(
-    source,
-    target,
-    intent.itemId,
-    intent.targetIndex,
-  );
-  return {
-    ...containers,
-    [intent.sourceContainerId]: [...nextSource],
-    [intent.targetContainerId]: [...nextTarget],
   };
 }
