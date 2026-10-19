@@ -1,5 +1,5 @@
 import type { DndId, MoveIntent } from "../session/types.js";
-import { applyMoveIntentToIds } from "../sortable/hooks.js";
+import { applyMoveIntentToIds } from "../sortable/apply-move.js";
 
 /** Default root container id for container-per-parent tree adapters. */
 export const DEFAULT_ROOT_CONTAINER_ID = "__tree_root__";

@@ -20,8 +20,8 @@ export {
   type DndMessages,
 } from "./accessibility/messages.js";
 export { computeKeyboardMove, type KeyboardMoveAction } from "./accessibility/keyboard.js";
+export { applyMoveIntentToIds } from "./sortable/apply-move.js";
 export {
-  applyMoveIntentToIds,
   useSortable,
   useSortableContainer,
   type SortableContainerProps,

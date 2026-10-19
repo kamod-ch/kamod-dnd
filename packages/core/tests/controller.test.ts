@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { DndController } from "../src/session/controller.js";
 import type { DndSessionEvent } from "../src/session/types.js";
-import { applyMoveIntentToIds } from "../src/sortable/hooks.js";
+import { applyMoveIntentToIds } from "../src/sortable/apply-move.js";
 import { buildMoveIntent, isNoOpMove } from "../src/sortable/move-helpers.js";
 
 describe("DndController", () => {
