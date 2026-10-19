@@ -80,7 +80,7 @@ export function useDroppable(args: {
   const { controller } = useDndContext();
   const { id, kind, containerId, disabled } = args.options;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (kind === "container") {
       controller.registerContainer({ id: containerId, disabled });
       return () => controller.unregisterContainer(containerId);
@@ -88,7 +88,7 @@ export function useDroppable(args: {
     return undefined;
   }, [controller, kind, containerId, disabled, id]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = args.ref.current;
     if (!element) return;
     if (kind === "container") {

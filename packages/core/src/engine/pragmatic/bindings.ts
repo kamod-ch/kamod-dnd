@@ -60,11 +60,22 @@ export function deliverElementDrag<TData>(
   deliverElementDragOver(controller, data, dropTargets);
 }
 
+export function elementDropShouldClear(args: {
+  dropTargetCount: number;
+  buttons: number;
+}): boolean {
+  return args.buttons !== 0 || args.dropTargetCount === 0;
+}
+
 export function deliverElementDrop<TData>(
   controller: DndController<TData>,
   data: Record<string, unknown>,
+  dropTargets?: ReadonlyArray<DropTargetLike>,
 ): void {
   if (!ownsElementSource(data, controller.scopeToken)) return;
+  if (dropTargets && dropTargets.length === 0) {
+    controller.clearDragTarget();
+  }
   controller.handleDrop();
 }
 
@@ -84,8 +95,12 @@ export function bindPragmaticEngine<TData>(
       onDrag: ({ source, location }) => {
         deliverElementDragOver(controller, source.data, location.current.dropTargets);
       },
-      onDrop: ({ source }) => {
-        deliverElementDrop(controller, source.data);
+      onDrop: ({ source, location }) => {
+        const clear = elementDropShouldClear({
+          dropTargetCount: location.current.dropTargets.length,
+          buttons: location.current.input.buttons,
+        });
+        deliverElementDrop(controller, source.data, clear ? [] : undefined);
       },
     }),
   );

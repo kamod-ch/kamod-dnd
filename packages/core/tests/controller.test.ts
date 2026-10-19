@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { deliverElementDrop, elementDropShouldClear } from "../src/engine/pragmatic/bindings.js";
+import { ITEM_TYPE, SCOPE_KEY } from "../src/engine/pragmatic/types.js";
 import { DndController } from "../src/session/controller.js";
 import type { DndSessionEvent } from "../src/session/types.js";
 import { applyMoveIntentToIds } from "../src/sortable/apply-move.js";
@@ -112,6 +114,38 @@ describe("DndController", () => {
     expect(onMove).not.toHaveBeenCalled();
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onCancel).toHaveBeenCalledWith("pointer-cancel");
+  });
+
+  it("cancels a drop whose final target list is empty", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove, onCancel });
+    setupList(controller, ["a", "b"]);
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: "b",
+      overContainerId: "list",
+      edge: "bottom",
+    });
+    deliverElementDrop(
+      controller,
+      {
+        type: ITEM_TYPE,
+        itemId: "a",
+        containerId: "list",
+        [SCOPE_KEY]: controller.scopeToken,
+      },
+      [],
+    );
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledWith("pointer-cancel");
+    expect(controller.readSnapshot().phase).toBe("idle");
+  });
+
+  it("treats a still-held pointer or an empty target list as a cancelled drop", () => {
+    expect(elementDropShouldClear({ dropTargetCount: 2, buttons: 1 })).toBe(true);
+    expect(elementDropShouldClear({ dropTargetCount: 0, buttons: 0 })).toBe(true);
+    expect(elementDropShouldClear({ dropTargetCount: 2, buttons: 0 })).toBe(false);
   });
 
   it("cancels once when the current target container is removed", () => {
