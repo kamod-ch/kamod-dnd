@@ -37,14 +37,18 @@ In `onMove`, run `validateTreeMove` then `applyTreeMove` and replace your tree s
 
 Nested child lists register container drop targets. The pragmatic engine picks the active target with **`pickActiveDropTarget`** (container vs item precedence) instead of always using `dropTargets[0]`. Flat Kanban and editor examples keep item-edge reordering.
 
-## Reference fixture
+## Example
 
-The repo spike [`spikes/tree-spike`](https://github.com/kamod-ch/kamod-dnd/tree/main/spikes/tree-spike) is the browser regression fixture (Vitest + Playwright). Run:
+`examples/tree` is the browser reference. It uses only `@kamod-ch/dnd`, `@kamod-ch/dnd/sortable`, and `@kamod-ch/dnd/tree`: recursive rows, an empty child list, cycle rejection, keyboard indent/outdent, human labels, and focus after an accepted reparent.
+
+Collapsed parents stay application state. The example expands a collapsed parent after the pointer rests on its row for 900ms (`COLLAPSED_HOVER_EXPAND_MS`). Leaving the row, dropping, unmounting, or changing the drag target clears that timer. `reducedMotion` on `DndProvider` expands on the next rest with no delay. This recipe is not a core API.
+
+Flattened-row trees and virtualized trees are unsupported.
 
 ```bash
-pnpm --filter @kamod-dnd/spike-tree test:e2e
+pnpm --filter @kamod-dnd/example-tree dev
 ```
 
 ## Limitations
 
-Touch devices and screen readers are **not** certified for tree reparent yet. See [`docs/tree-evaluation.md`](https://github.com/kamod-ch/kamod-dnd/blob/main/docs/tree-evaluation.md) and [`docs/a11y-manual-checklist.md`](https://github.com/kamod-ch/kamod-dnd/blob/main/docs/a11y-manual-checklist.md) before marketing full tree a11y.
+`@kamod-ch/dnd/tree` stays **experimental**. Chromium, Firefox, and WebKit cover the example, including focus and labels. VoiceOver, NVDA, iOS Safari, and Android Chrome are not certified. See [`docs/tree-evaluation.md`](https://github.com/kamod-ch/kamod-dnd/blob/main/docs/tree-evaluation.md) and [`docs/a11y-manual-checklist.md`](https://github.com/kamod-ch/kamod-dnd/blob/main/docs/a11y-manual-checklist.md).

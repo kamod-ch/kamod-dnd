@@ -11,41 +11,96 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import type { DndController } from "../../session/controller.js";
 import type { DndId } from "../../session/types.js";
-import { pickActiveDropTarget } from "./drop-target.js";
-import { CONTAINER_TYPE, ITEM_TYPE } from "./types.js";
+import { selectScopedDropTarget, type DropTargetLike } from "./drop-target.js";
+import { CONTAINER_TYPE, ITEM_TYPE, SCOPE_KEY } from "./types.js";
 
 export type EngineBindingOptions = {
   scrollElement?: HTMLElement | null;
 };
+
+export function ownsElementSource(data: Record<string, unknown>, scope: string): boolean {
+  return data.type === ITEM_TYPE && data[SCOPE_KEY] === scope;
+}
+
+export function deliverElementDragStart<TData>(
+  controller: DndController<TData>,
+  data: Record<string, unknown>,
+): boolean {
+  if (!ownsElementSource(data, controller.scopeToken)) return false;
+  controller.handleDragStart(String(data.itemId));
+  return true;
+}
+
+export function deliverElementDragOver<TData>(
+  controller: DndController<TData>,
+  data: Record<string, unknown>,
+  dropTargets: ReadonlyArray<DropTargetLike>,
+): void {
+  if (!ownsElementSource(data, controller.scopeToken)) return;
+  const target = selectScopedDropTarget(dropTargets, controller.scopeToken);
+  if (!target) {
+    controller.clearDragTarget();
+    return;
+  }
+  const isContainer = target.data.type === CONTAINER_TYPE;
+  const edge = isContainer ? "bottom" : extractClosestEdge(target.data);
+  controller.handleDragOver({
+    overId: isContainer ? null : target.data.itemId ? String(target.data.itemId) : null,
+    overContainerId: String(target.data.containerId),
+    edge,
+  });
+}
+
+export function deliverElementDrag<TData>(
+  controller: DndController<TData>,
+  data: Record<string, unknown>,
+  dropTargets: ReadonlyArray<DropTargetLike>,
+): void {
+  if (!deliverElementDragStart(controller, data)) return;
+  deliverElementDragOver(controller, data, dropTargets);
+}
+
+export function elementDropShouldClear(args: {
+  dropTargetCount: number;
+  buttons: number;
+}): boolean {
+  return args.buttons !== 0 || args.dropTargetCount === 0;
+}
+
+export function deliverElementDrop<TData>(
+  controller: DndController<TData>,
+  data: Record<string, unknown>,
+  dropTargets?: ReadonlyArray<DropTargetLike>,
+): void {
+  if (!ownsElementSource(data, controller.scopeToken)) return;
+  if (dropTargets && dropTargets.length === 0) {
+    controller.clearDragTarget();
+  }
+  controller.handleDrop();
+}
 
 export function bindPragmaticEngine<TData>(
   controller: DndController<TData>,
   options: EngineBindingOptions = {},
 ): () => void {
   const cleanups: Array<() => void> = [];
+  const scope = controller.scopeToken;
 
   cleanups.push(
     monitorForElements({
+      canMonitor: ({ source }) => ownsElementSource(source.data, scope),
       onDragStart: ({ source }) => {
-        if (source.data.type !== ITEM_TYPE) return;
-        controller.handleDragStart(String(source.data.itemId));
+        deliverElementDragStart(controller, source.data);
       },
-      onDrag: ({ location }) => {
-        const target = pickActiveDropTarget(location.current.dropTargets);
-        if (!target) {
-          controller.clearDragTarget();
-          return;
-        }
-        const isContainer = target.data.type === CONTAINER_TYPE;
-        const edge = isContainer ? "bottom" : extractClosestEdge(target.data);
-        controller.handleDragOver({
-          overId: isContainer ? null : target.data.itemId ? String(target.data.itemId) : null,
-          overContainerId: String(target.data.containerId),
-          edge,
+      onDrag: ({ source, location }) => {
+        deliverElementDragOver(controller, source.data, location.current.dropTargets);
+      },
+      onDrop: ({ source, location }) => {
+        const clear = elementDropShouldClear({
+          dropTargetCount: location.current.dropTargets.length,
+          buttons: location.current.input.buttons,
         });
-      },
-      onDrop: () => {
-        controller.handleDrop();
+        deliverElementDrop(controller, source.data, clear ? [] : undefined);
       },
     }),
   );
@@ -72,6 +127,7 @@ export function registerDraggableElement<TData>(args: {
   handle: HTMLElement;
   itemId: DndId;
   containerId: DndId;
+  scope: string;
   controller: DndController<TData>;
   disabled?: boolean;
 }): () => void {
@@ -83,6 +139,7 @@ export function registerDraggableElement<TData>(args: {
       type: ITEM_TYPE,
       itemId: args.itemId,
       containerId: args.containerId,
+      [SCOPE_KEY]: args.scope,
     }),
   });
 }
@@ -91,6 +148,7 @@ export function registerItemDropTarget(args: {
   element: HTMLElement;
   itemId: DndId;
   containerId: DndId;
+  scope: string;
   disabled?: boolean;
 }): () => void {
   if (args.disabled) return () => {};
@@ -102,6 +160,7 @@ export function registerItemDropTarget(args: {
           type: ITEM_TYPE,
           itemId: args.itemId,
           containerId: args.containerId,
+          [SCOPE_KEY]: args.scope,
         },
         {
           element,
@@ -115,6 +174,7 @@ export function registerItemDropTarget(args: {
 export function registerContainerDropTarget(args: {
   element: HTMLElement;
   containerId: DndId;
+  scope: string;
   disabled?: boolean;
 }): () => void {
   if (args.disabled) return () => {};
@@ -123,6 +183,7 @@ export function registerContainerDropTarget(args: {
     getData: () => ({
       type: CONTAINER_TYPE,
       containerId: args.containerId,
+      [SCOPE_KEY]: args.scope,
     }),
   });
 }

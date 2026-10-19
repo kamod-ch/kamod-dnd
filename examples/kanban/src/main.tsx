@@ -80,7 +80,15 @@ function App() {
   };
 
   return (
-    <DndProvider<Card> onMove={onMove} dropRule={dropRule} scrollRef={scrollRef}>
+    <DndProvider<Card>
+      onMove={onMove}
+      dropRule={dropRule}
+      scrollRef={scrollRef}
+      getItemLabel={(_id, card) => card.title}
+      getContainerLabel={(id) =>
+        id === "todo" ? "To do" : id === "doing" ? "Doing" : id === "done" ? "Done" : id
+      }
+    >
       <div class="kp-theme" style={{ padding: 16 }}>
         <header style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
           <h1 data-testid="kanban-title">Kanban</h1>

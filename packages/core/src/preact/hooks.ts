@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useState } from "preact/hooks";
 import { useDndContext } from "./context.js";
 import type { DndId, DndSessionSnapshot } from "../session/types.js";
 import {
@@ -37,7 +37,18 @@ export function useDraggable<TData>(args: {
   useEffect(() => {
     controller.registerItem({ id, containerId, data, disabled });
     return () => controller.unregisterItem(id);
+  }, [controller, id]);
+
+  useEffect(() => {
+    controller.updateItemRegistration({ id, containerId, data, disabled });
   }, [controller, id, containerId, data, disabled]);
+
+  useLayoutEffect(() => {
+    const handle = args.handleRef.current;
+    if (!handle) return;
+    controller.registerHandle(id, handle);
+    return () => controller.unregisterHandle(id, handle);
+  }, [controller, id, args.handleRef]);
 
   useEffect(() => {
     const element = args.itemRef.current;
@@ -48,6 +59,7 @@ export function useDraggable<TData>(args: {
       handle,
       itemId: id,
       containerId,
+      scope: controller.scopeToken,
       controller,
       disabled,
     });
@@ -68,7 +80,7 @@ export function useDroppable(args: {
   const { controller } = useDndContext();
   const { id, kind, containerId, disabled } = args.options;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (kind === "container") {
       controller.registerContainer({ id: containerId, disabled });
       return () => controller.unregisterContainer(containerId);
@@ -76,16 +88,22 @@ export function useDroppable(args: {
     return undefined;
   }, [controller, kind, containerId, disabled, id]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = args.ref.current;
     if (!element) return;
     if (kind === "container") {
-      return registerContainerDropTarget({ element, containerId, disabled });
+      return registerContainerDropTarget({
+        element,
+        containerId,
+        scope: controller.scopeToken,
+        disabled,
+      });
     }
     return registerItemDropTarget({
       element,
       itemId: id,
       containerId,
+      scope: controller.scopeToken,
       disabled,
     });
   }, [controller, id, kind, containerId, disabled, args.ref]);

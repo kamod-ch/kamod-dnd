@@ -31,5 +31,12 @@ export default defineConfig({
       timeout: 120_000,
       reuseExistingServer: false,
     },
+    {
+      command:
+        "pnpm --filter @kamod-dnd/example-tree build && pnpm --filter @kamod-dnd/example-tree preview",
+      url: "http://localhost:14277",
+      timeout: 120_000,
+      reuseExistingServer: false,
+    },
   ],
 });

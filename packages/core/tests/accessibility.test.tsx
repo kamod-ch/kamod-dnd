@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/preact";
-import { useState } from "preact/hooks";
+import { useRef, useState } from "preact/hooks";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { DndLocale } from "../src/accessibility/messages.js";
 import { DndProvider, useDndContext } from "../src/preact/context.js";
@@ -63,6 +63,29 @@ function PointerProbe() {
 
 function statusText() {
   return screen.getByRole("status").textContent;
+}
+
+let animationFrames: FrameRequestCallback[] = [];
+
+function installAnimationFrame() {
+  animationFrames = [];
+  vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+    animationFrames.push(callback);
+    return animationFrames.length;
+  });
+}
+
+async function flushAnimationFrame() {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+  for (let frame = 0; frame < 2; frame += 1) {
+    const pending = animationFrames.splice(0, animationFrames.length);
+    await act(async () => {
+      for (const callback of pending) callback(0);
+    });
+  }
 }
 
 describe("drag announcements", () => {
@@ -244,5 +267,235 @@ describe("drag announcements", () => {
     allow = true;
     fireEvent.click(screen.getByRole("button", { name: "transfer-a" }));
     expect(statusText()).toBe("transfer a -> other");
+  });
+
+  it("uses the latest item and container labels, otherwise the id", async () => {
+    const view = render(
+      <DndProvider<ItemData>
+        locale={locale}
+        getItemLabel={(_id, data) => `item ${data.n}`}
+        getContainerLabel={(id) => `container ${id}`}
+      >
+        <PointerProbe />
+      </DndProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "register" }));
+    fireEvent.click(screen.getByRole("button", { name: "start" }));
+    expect(statusText()).toBe("pickup item 1");
+    fireEvent.click(screen.getByRole("button", { name: "transfer" }));
+    expect(statusText()).toBe("transfer item 1 -> container other");
+    view.rerender(
+      <DndProvider<ItemData> locale={locale} getItemLabel={(_id, data) => `item ${data.n + 1}`}>
+        <PointerProbe />
+      </DndProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "start" }));
+    expect(statusText()).toBe("pickup item 2");
+    fireEvent.click(screen.getByRole("button", { name: "transfer" }));
+    expect(statusText()).toBe("transfer item 2 -> other");
+  });
+
+  it("restores the handle after a keyboard move and leaves focus alone on a boundary", async () => {
+    function Row({ id }: { id: string }) {
+      const { itemRef, handleRef, moveByKeyboard } = useSortable({
+        id,
+        containerId: "list",
+        data: { n: 1 },
+      });
+      return (
+        <div ref={itemRef}>
+          <button ref={handleRef} type="button">
+            {`handle-${id}`}
+          </button>
+          <button type="button" onClick={() => moveByKeyboard({ type: "down" })}>
+            {`down-${id}`}
+          </button>
+          <button type="button" onClick={() => moveByKeyboard({ type: "up" })}>
+            {`up-${id}`}
+          </button>
+        </div>
+      );
+    }
+
+    function Board({ order }: { order: string[] }) {
+      const list = useSortableContainer({ id: "list", itemIds: order });
+      return (
+        <div ref={list.ref}>
+          {order.map((id) => (
+            <Row key={id} id={id} />
+          ))}
+        </div>
+      );
+    }
+
+    function App() {
+      const [order, setOrder] = useState(["a", "b"]);
+      return (
+        <DndProvider<ItemData>
+          onMove={(intent) => {
+            setOrder(applyMoveIntentToIds({ list: order }, intent).list ?? order);
+          }}
+        >
+          <Board order={order} />
+        </DndProvider>
+      );
+    }
+
+    installAnimationFrame();
+    render(<App />);
+    const up = screen.getByRole("button", { name: "up-a" });
+    up.focus();
+    fireEvent.click(up);
+    await flushAnimationFrame();
+    expect(document.activeElement).toBe(up);
+
+    fireEvent.click(screen.getByRole("button", { name: "down-a" }));
+    await flushAnimationFrame();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "handle-a" }));
+  });
+
+  it("does not steal focus while hovering or when a keyboard move is rejected", async () => {
+    let allow = true;
+
+    function Row({ id }: { id: string }) {
+      const { itemRef, handleRef, moveByKeyboard } = useSortable({
+        id,
+        containerId: "list",
+        data: { n: 1 },
+      });
+      return (
+        <div ref={itemRef}>
+          <button ref={handleRef} type="button">
+            {`handle-${id}`}
+          </button>
+          <button type="button" onClick={() => moveByKeyboard({ type: "down" })}>
+            {`down-${id}`}
+          </button>
+        </div>
+      );
+    }
+
+    function App() {
+      const list = useSortableContainer({ id: "list", itemIds: ["a", "b"] });
+      const { controller } = useDndContext<ItemData>();
+      return (
+        <>
+          <button type="button" onClick={() => controller.handleDragStart("a")}>
+            start
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              controller.handleDragOver({ overId: "b", overContainerId: "list", edge: "top" })
+            }
+          >
+            over
+          </button>
+          <div ref={list.ref}>
+            <Row id="a" />
+            <Row id="b" />
+          </div>
+        </>
+      );
+    }
+
+    installAnimationFrame();
+    render(
+      <DndProvider<ItemData> dropRule={() => allow}>
+        <App />
+      </DndProvider>,
+    );
+    const before = document.activeElement;
+    fireEvent.click(screen.getByRole("button", { name: "start" }));
+    fireEvent.click(screen.getByRole("button", { name: "over" }));
+    expect(document.activeElement).toBe(before);
+
+    allow = false;
+    const down = screen.getByRole("button", { name: "down-a" });
+    down.focus();
+    fireEvent.click(down);
+    await flushAnimationFrame();
+    expect(document.activeElement).toBe(down);
+  });
+
+  it("focuses a provider fallback when the moved item is gone", async () => {
+    function Row() {
+      const sortable = useSortable({ id: "a", containerId: "list", data: { n: 1 } });
+      const list = useSortableContainer({ id: "list", itemIds: ["a"] });
+      const { controller } = useDndContext<ItemData>();
+      return (
+        <div ref={list.ref}>
+          <button type="button" onClick={() => controller.handleDragStart("a")}>
+            start
+          </button>
+          <div ref={sortable.itemRef}>
+            <button ref={sortable.handleRef} type="button">
+              handle-a
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function App({ show }: { show: boolean }) {
+      const fallbackRef = useRef<HTMLButtonElement>(null);
+      return (
+        <DndProvider<ItemData> focusFallbackRef={fallbackRef}>
+          <button ref={fallbackRef} type="button">
+            fallback
+          </button>
+          {show ? <Row /> : null}
+        </DndProvider>
+      );
+    }
+
+    installAnimationFrame();
+    const view = render(<App show />);
+    fireEvent.click(screen.getByRole("button", { name: "start" }));
+    view.rerender(<App show={false} />);
+    await flushAnimationFrame();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "fallback" }));
+    expect(screen.queryByRole("button", { name: "handle-a" })).toBeNull();
+  });
+
+  it("keeps handle focus inside the provider that owns the item", async () => {
+    function ListBody({ name, order }: { name: string; order: string[] }) {
+      const list = useSortableContainer({ id: "list", itemIds: order });
+      const sortable = useSortable({ id: "a", containerId: "list", data: { n: 1 } });
+      return (
+        <div ref={list.ref}>
+          <button ref={sortable.handleRef} type="button">
+            {`handle-${name}`}
+          </button>
+          <button type="button" onClick={() => sortable.moveByKeyboard({ type: "down" })}>
+            {`down-${name}`}
+          </button>
+        </div>
+      );
+    }
+
+    function List({ name }: { name: string }) {
+      const [order, setOrder] = useState(["a", "b"]);
+      return (
+        <DndProvider<ItemData>
+          onMove={(intent) => {
+            setOrder(applyMoveIntentToIds({ list: order }, intent).list ?? order);
+          }}
+        >
+          <ListBody name={name} order={order} />
+        </DndProvider>
+      );
+    }
+
+    installAnimationFrame();
+    render(
+      <>
+        <List name="a" />
+        <List name="b" />
+      </>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "down-a" }));
+    await flushAnimationFrame();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "handle-a" }));
   });
 });

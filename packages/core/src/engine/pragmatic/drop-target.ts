@@ -1,4 +1,4 @@
-import { CONTAINER_TYPE, ITEM_TYPE } from "./types.js";
+import { CONTAINER_TYPE, ITEM_TYPE, SCOPE_KEY } from "./types.js";
 
 export type DropTargetLike = {
   data: Record<string, unknown>;
@@ -28,4 +28,11 @@ export function pickActiveDropTarget(
   if (itemIndex >= 0) return dropTargets[itemIndex]!;
   if (containerIndex >= 0) return dropTargets[containerIndex]!;
   return dropTargets[0] ?? null;
+}
+
+export function selectScopedDropTarget(
+  dropTargets: ReadonlyArray<DropTargetLike>,
+  scope: string,
+): DropTargetLike | null {
+  return pickActiveDropTarget(dropTargets.filter((target) => target.data[SCOPE_KEY] === scope));
 }

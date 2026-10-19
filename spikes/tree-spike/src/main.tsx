@@ -1,7 +1,7 @@
-import { DndProvider, useDndState, type MoveIntent } from "@kamod-ch/dnd";
+import { DndProvider, useDndContext, useDndState, type MoveIntent } from "@kamod-ch/dnd";
 import { useSortable, useSortableContainer } from "@kamod-ch/dnd/sortable";
 import { render } from "preact";
-import { useState } from "preact/hooks";
+import { useRef, useState } from "preact/hooks";
 import {
   applyTreeMove,
   createFixtureTree,
@@ -22,6 +22,8 @@ function App() {
   });
   const [lastIntent, setLastIntent] = useState<string>("none");
   const [lastReject, setLastReject] = useState<string>("none");
+  const commitRef = useRef<(intent: MoveIntent<TreeNode>) => boolean>(() => false);
+  const commit = (intent: MoveIntent<TreeNode>) => commitRef.current(intent);
 
   const onMove = (intent: MoveIntent<TreeNode>) => {
     const validation = validateTreeMove(tree, intent);
@@ -51,12 +53,12 @@ function App() {
       setLastReject(`keyboard-${action}-blocked`);
       return;
     }
-    onMove(intent);
+    commit(intent);
   };
 
   const attemptCycle = () => {
     const node = tree.nodes.rA!;
-    onMove({
+    commit({
       kind: "move",
       itemId: "rA",
       sourceContainerId: ROOT_CONTAINER_ID,
@@ -68,7 +70,7 @@ function App() {
 
   const moveG1ToEmptyRootB = () => {
     const node = tree.nodes.g1!;
-    onMove({
+    commit({
       kind: "move",
       itemId: "g1",
       sourceContainerId: "c1",
@@ -79,7 +81,8 @@ function App() {
   };
 
   return (
-    <DndProvider<TreeNode> onMove={onMove}>
+    <DndProvider<TreeNode> onMove={onMove} getItemLabel={(_id, node) => node.label}>
+      <CommitBridge commitRef={commitRef} />
       <div style={{ fontFamily: "system-ui", padding: 16, maxWidth: 720 }}>
         <h1 data-testid="tree-title">Tree spike</h1>
         <DebugPanel
@@ -103,6 +106,16 @@ function App() {
       </div>
     </DndProvider>
   );
+}
+
+function CommitBridge({
+  commitRef,
+}: {
+  commitRef: { current: (intent: MoveIntent<TreeNode>) => boolean };
+}) {
+  const { controller } = useDndContext<TreeNode>();
+  commitRef.current = (intent) => controller.tryCommitMove(intent);
+  return null;
 }
 
 function DebugPanel({

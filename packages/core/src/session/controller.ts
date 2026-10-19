@@ -10,7 +10,7 @@ import type {
   DropRule,
   MoveIntent,
 } from "./types.js";
-import { buildMoveIntent, indexAfterRemoval } from "../sortable/move-helpers.js";
+import { buildMoveIntent, indexAfterRemoval, isNoOpMove } from "../sortable/move-helpers.js";
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 
 export type DndControllerOptions<TData> = {
@@ -32,10 +32,13 @@ export class DndController<TData = unknown> {
   readonly #items = new Map<DndId, DndItemRegistration<TData>>();
   readonly #containers = new Map<DndId, DndContainerRegistration>();
   readonly #containerOrder = new Map<DndId, DndId[]>();
+  readonly #handles = new Map<DndId, HTMLElement>();
 
   readonly #options: DndControllerOptions<TData>;
   readonly #listeners = new Set<(event: DndSessionEvent<TData>) => void>();
   #lastOverKey: string | null = null;
+  /** Opaque provider scope. Internal to the engine; not part of MoveIntent. */
+  readonly scopeToken = globalThis.crypto.randomUUID();
 
   constructor(options: DndControllerOptions<TData> = {}) {
     this.#options = options;
@@ -107,11 +110,44 @@ export class DndController<TData = unknown> {
   }
 
   setContainerOrder(containerId: DndId, ids: DndId[]): void {
-    this.#containerOrder.set(containerId, [...ids]);
+    const previous = this.#containerOrder.get(containerId) ?? [];
+    const next = [...ids];
+    if (sameIds(previous, next)) return;
+    const activeId = this.#activeId.value;
+    const activeItem = activeId ? this.#items.get(activeId) : undefined;
+    const sessionActive = this.#phase.value === "dragging" || this.#phase.value === "dropping";
+    const affectsSession =
+      sessionActive &&
+      !!activeItem &&
+      (containerId === activeItem.containerId || containerId === this.#previewContainerId.value);
+    this.#containerOrder.set(containerId, next);
+    if (affectsSession) this.cancel("external-data-change");
   }
 
   registerItem(reg: DndItemRegistration<TData>): void {
     this.#items.set(reg.id, reg);
+  }
+
+  updateItemRegistration(reg: DndItemRegistration<TData>): void {
+    const previous = this.#items.get(reg.id);
+    if (!previous) {
+      this.registerItem(reg);
+      return;
+    }
+    const sessionActive = this.#phase.value === "dragging" || this.#phase.value === "dropping";
+    const isActive = sessionActive && this.#activeId.value === reg.id;
+    this.#items.set(reg.id, reg);
+    if (!isActive) return;
+    if (reg.disabled && !previous.disabled) {
+      this.cancel("disabled");
+      return;
+    }
+    if (reg.containerId !== previous.containerId) {
+      this.cancel("external-data-change");
+      return;
+    }
+    // Keep the latest payload on the registration. The active-data signal stays
+    // at drag start so a fresh data object cannot retrigger snapshot subscribers.
   }
 
   unregisterItem(id: DndId): void {
@@ -123,6 +159,22 @@ export class DndController<TData = unknown> {
 
   getItemData(id: DndId): TData | undefined {
     return this.#items.get(id)?.data;
+  }
+
+  registerHandle(id: DndId, element: HTMLElement): void {
+    this.#handles.set(id, element);
+  }
+
+  unregisterHandle(id: DndId, element: HTMLElement): void {
+    if (this.#handles.get(id) === element) this.#handles.delete(id);
+  }
+
+  focusHandle(id: DndId): boolean {
+    const element = this.#handles.get(id);
+    const item = this.#items.get(id);
+    if (!element || !element.isConnected || !item || item.disabled) return false;
+    element.focus();
+    return true;
   }
 
   getContainerIds(containerId: DndId): DndId[] {
@@ -227,6 +279,7 @@ export class DndController<TData = unknown> {
       targetIndex,
       data: item.data,
     });
+    if (this.#completeNoOp(intent)) return;
 
     const allowed = this.#options.dropRule ? this.#options.dropRule(intent) : true;
     if (!allowed) {
@@ -256,6 +309,8 @@ export class DndController<TData = unknown> {
   }
 
   tryCommitMove(intent: MoveIntent<TData>): boolean {
+    const sourceIndex = this.getContainerIds(intent.sourceContainerId).indexOf(intent.itemId);
+    if (sourceIndex >= 0 && isNoOpMove(intent, sourceIndex)) return true;
     const allowed = this.#options.dropRule ? this.#options.dropRule(intent) : true;
     if (!allowed) return false;
     const accepted = this.#options.onMove?.(intent);
@@ -280,6 +335,20 @@ export class DndController<TData = unknown> {
     this.#items.clear();
     this.#containers.clear();
     this.#containerOrder.clear();
+    this.#handles.clear();
     this.#listeners.clear();
   }
+
+  #completeNoOp(intent: MoveIntent<TData>): boolean {
+    const sourceIndex = this.getContainerIds(intent.sourceContainerId).indexOf(intent.itemId);
+    if (sourceIndex < 0 || !isNoOpMove(intent, sourceIndex)) return false;
+    this.#phase.value = "dropping";
+    this.#emit({ type: "drop", intent });
+    this.reset();
+    return true;
+  }
+}
+
+function sameIds(left: readonly DndId[], right: readonly DndId[]): boolean {
+  return left.length === right.length && left.every((id, index) => id === right[index]);
 }

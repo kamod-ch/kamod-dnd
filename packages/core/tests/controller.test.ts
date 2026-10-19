@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { deliverElementDrop, elementDropShouldClear } from "../src/engine/pragmatic/bindings.js";
+import { ITEM_TYPE, SCOPE_KEY } from "../src/engine/pragmatic/types.js";
 import { DndController } from "../src/session/controller.js";
 import type { DndSessionEvent } from "../src/session/types.js";
 import { applyMoveIntentToIds } from "../src/sortable/apply-move.js";
@@ -112,6 +114,38 @@ describe("DndController", () => {
     expect(onMove).not.toHaveBeenCalled();
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onCancel).toHaveBeenCalledWith("pointer-cancel");
+  });
+
+  it("cancels a drop whose final target list is empty", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove, onCancel });
+    setupList(controller, ["a", "b"]);
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: "b",
+      overContainerId: "list",
+      edge: "bottom",
+    });
+    deliverElementDrop(
+      controller,
+      {
+        type: ITEM_TYPE,
+        itemId: "a",
+        containerId: "list",
+        [SCOPE_KEY]: controller.scopeToken,
+      },
+      [],
+    );
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledWith("pointer-cancel");
+    expect(controller.readSnapshot().phase).toBe("idle");
+  });
+
+  it("treats a still-held pointer or an empty target list as a cancelled drop", () => {
+    expect(elementDropShouldClear({ dropTargetCount: 2, buttons: 1 })).toBe(true);
+    expect(elementDropShouldClear({ dropTargetCount: 0, buttons: 0 })).toBe(true);
+    expect(elementDropShouldClear({ dropTargetCount: 2, buttons: 0 })).toBe(false);
   });
 
   it("cancels once when the current target container is removed", () => {
@@ -237,7 +271,7 @@ describe("DndController", () => {
       itemId: "a",
       sourceContainerId: "list",
       targetContainerId: "list",
-      targetIndex: 0,
+      targetIndex: 1,
       data: { n: 1 },
     });
     expect(controller.tryCommitMove(intent)).toBe(false);
@@ -366,5 +400,130 @@ describe("no-op moves", () => {
     });
     const next = applyMoveIntentToIds(containers, intent);
     expect(next.list).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("controlled session consistency", () => {
+  function setupList(controller: DndController<{ n: number }>, ids: string[]) {
+    controller.registerContainer({ id: "list" });
+    controller.setContainerOrder("list", ids);
+    for (const id of ids) {
+      controller.registerItem({ id, containerId: "list", data: { n: 1 } });
+    }
+  }
+
+  it("keeps the latest payload when data changes during a drag", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove, onCancel });
+    setupList(controller, ["a", "b"]);
+    controller.handleDragStart("a");
+    controller.updateItemRegistration({ id: "a", containerId: "list", data: { n: 4 } });
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(controller.readSnapshot().phase).toBe("dragging");
+    controller.handleDragOver({ overId: "b", overContainerId: "list", edge: "bottom" });
+    controller.handleDrop();
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0]?.[0].data).toEqual({ n: 4 });
+  });
+
+  it("cancels with disabled when the active item becomes disabled", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove, onCancel });
+    setupList(controller, ["a"]);
+    controller.handleDragStart("a");
+    controller.updateItemRegistration({
+      id: "a",
+      containerId: "list",
+      data: { n: 1 },
+      disabled: true,
+    });
+    controller.handleDrop();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledWith("disabled");
+    expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it("cancels with external-data-change when the active item changes container", () => {
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onCancel });
+    setupList(controller, ["a"]);
+    controller.registerContainer({ id: "other" });
+    controller.handleDragStart("a");
+    controller.updateItemRegistration({ id: "a", containerId: "other", data: { n: 1 } });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledWith("external-data-change");
+  });
+
+  it("cancels when the source or preview order changes and ignores unrelated orders", () => {
+    const onMove = vi.fn();
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove, onCancel });
+    setupList(controller, ["a", "b"]);
+    controller.registerContainer({ id: "other" });
+    controller.setContainerOrder("other", ["c"]);
+    controller.handleDragStart("a");
+    controller.setContainerOrder("other", ["c"]);
+    expect(onCancel).not.toHaveBeenCalled();
+    controller.setContainerOrder("spare", []);
+    controller.registerContainer({ id: "spare" });
+    controller.setContainerOrder("spare", ["z"]);
+    expect(controller.readSnapshot().phase).toBe("dragging");
+    controller.handleDragOver({ overId: null, overContainerId: "other", edge: "bottom" });
+    controller.setContainerOrder("other", ["c", "d"]);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledWith("external-data-change");
+    expect(onMove).not.toHaveBeenCalled();
+
+    const source = new DndController<{ n: number }>({ onMove, onCancel });
+    setupList(source, ["a", "b"]);
+    source.handleDragStart("a");
+    source.setContainerOrder("list", ["b", "a"]);
+    source.handleDrop();
+    expect(onCancel).toHaveBeenCalledTimes(2);
+    expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it("accepts same-position pointer and keyboard commits without mutation callbacks", () => {
+    const onMove = vi.fn();
+    const dropRule = vi.fn(() => true);
+    const controller = new DndController<{ n: number }>({ onMove, dropRule });
+    const events: string[] = [];
+    controller.subscribe((event) => events.push(event.type));
+    setupList(controller, ["a", "b", "c"]);
+    for (const [id, edge] of [
+      ["a", "top"],
+      ["b", "top"],
+      ["c", "bottom"],
+    ] as const) {
+      controller.handleDragStart(id);
+      controller.handleDragOver({ overId: id, overContainerId: "list", edge });
+      dropRule.mockClear();
+      onMove.mockClear();
+      controller.handleDrop();
+      expect(onMove).not.toHaveBeenCalled();
+      expect(dropRule).not.toHaveBeenCalled();
+    }
+    expect(events.filter((type) => type === "drop")).toHaveLength(3);
+
+    const keyboard = buildMoveIntent({
+      itemId: "b",
+      sourceContainerId: "list",
+      targetContainerId: "list",
+      targetIndex: 1,
+      data: { n: 1 },
+    });
+    expect(controller.tryCommitMove(keyboard)).toBe(true);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(dropRule).not.toHaveBeenCalled();
+
+    controller.handleDragStart("a");
+    controller.handleDragOver({ overId: "b", overContainerId: "list", edge: "bottom" });
+    dropRule.mockClear();
+    onMove.mockClear();
+    controller.handleDrop();
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(dropRule).toHaveBeenCalledTimes(1);
   });
 });
