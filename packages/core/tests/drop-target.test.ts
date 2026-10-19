@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { pickActiveDropTarget } from "../src/engine/pragmatic/drop-target.js";
-import { CONTAINER_TYPE, ITEM_TYPE } from "../src/engine/pragmatic/types.js";
+import {
+  pickActiveDropTarget,
+  selectScopedDropTarget,
+} from "../src/engine/pragmatic/drop-target.js";
+import { CONTAINER_TYPE, ITEM_TYPE, SCOPE_KEY } from "../src/engine/pragmatic/types.js";
 
 function target(type: string, extra: Record<string, unknown> = {}) {
   return { data: { type, ...extra } };
@@ -55,5 +58,28 @@ describe("pickActiveDropTarget", () => {
 
   it("returns null for empty input", () => {
     expect(pickActiveDropTarget([])).toBeNull();
+  });
+
+  it("drops foreign scopes before applying nested-target precedence", () => {
+    const picked = selectScopedDropTarget(
+      [
+        target(ITEM_TYPE, { itemId: "a", containerId: "list", [SCOPE_KEY]: "provider-b" }),
+        target(CONTAINER_TYPE, { containerId: "child", [SCOPE_KEY]: "provider-a" }),
+        target(ITEM_TYPE, { itemId: "child", containerId: "parent", [SCOPE_KEY]: "provider-a" }),
+        target(CONTAINER_TYPE, { containerId: "parent", [SCOPE_KEY]: "provider-a" }),
+      ],
+      "provider-a",
+    );
+    expect(picked?.data.containerId).toBe("child");
+    expect(picked?.data.type).toBe(CONTAINER_TYPE);
+    expect(picked?.data[SCOPE_KEY]).toBe("provider-a");
+  });
+
+  it("returns null when every target belongs to another provider", () => {
+    const picked = selectScopedDropTarget(
+      [target(ITEM_TYPE, { itemId: "a", containerId: "list", [SCOPE_KEY]: "provider-b" })],
+      "provider-a",
+    );
+    expect(picked).toBeNull();
   });
 });

@@ -36,6 +36,8 @@ export class DndController<TData = unknown> {
   readonly #options: DndControllerOptions<TData>;
   readonly #listeners = new Set<(event: DndSessionEvent<TData>) => void>();
   #lastOverKey: string | null = null;
+  /** Opaque provider scope. Internal to the engine; not part of MoveIntent. */
+  readonly scopeToken = globalThis.crypto.randomUUID();
 
   constructor(options: DndControllerOptions<TData> = {}) {
     this.#options = options;

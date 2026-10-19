@@ -172,4 +172,58 @@ function EditorBlock({
   );
 }
 
-render(<App />, document.getElementById("app")!);
+function IsolationItem({ id, name }: { id: string; name: string }) {
+  const { itemRef, handleRef } = useSortable({ id, containerId: "list", data: id });
+  return (
+    <div
+      ref={itemRef}
+      data-testid={`item-${name}-${id}`}
+      style={{ minHeight: 120, padding: 16, marginBottom: 8, border: "1px solid #ccc" }}
+    >
+      <button ref={handleRef} type="button" data-testid={`handle-${name}-${id}`}>
+        {`Drag ${id}`}
+      </button>
+    </div>
+  );
+}
+
+function IsolationList({ order, name }: { order: string[]; name: string }) {
+  const { ref } = useSortableContainer({ id: "list", itemIds: order });
+  return (
+    <div ref={ref} data-testid={`list-${name}`}>
+      {order.map((id) => (
+        <IsolationItem key={id} id={id} name={name} />
+      ))}
+    </div>
+  );
+}
+
+function IsolationBoard({ name }: { name: string }) {
+  const [order, setOrder] = useState(["a", "b"]);
+  const onMove = (intent: MoveIntent<string>) => {
+    setOrder(applyMoveIntentToIds({ list: order }, intent).list ?? order);
+  };
+  return (
+    <DndProvider<string> onMove={onMove}>
+      <section data-testid={`provider-${name}`}>
+        <p data-testid={`order-${name}`}>{order.join(",")}</p>
+        <IsolationList order={order} name={name} />
+      </section>
+    </DndProvider>
+  );
+}
+
+function IsolationApp() {
+  return (
+    <div style={{ display: "flex", gap: 48, padding: 24 }}>
+      <IsolationBoard name="a" />
+      <IsolationBoard name="b" />
+    </div>
+  );
+}
+
+const fixture = new URLSearchParams(window.location.search).get("fixture");
+render(
+  fixture === "provider-isolation" ? <IsolationApp /> : <App />,
+  document.getElementById("app")!,
+);

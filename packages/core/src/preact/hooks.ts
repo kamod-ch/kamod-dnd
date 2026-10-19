@@ -48,6 +48,7 @@ export function useDraggable<TData>(args: {
       handle,
       itemId: id,
       containerId,
+      scope: controller.scopeToken,
       controller,
       disabled,
     });
@@ -80,12 +81,18 @@ export function useDroppable(args: {
     const element = args.ref.current;
     if (!element) return;
     if (kind === "container") {
-      return registerContainerDropTarget({ element, containerId, disabled });
+      return registerContainerDropTarget({
+        element,
+        containerId,
+        scope: controller.scopeToken,
+        disabled,
+      });
     }
     return registerItemDropTarget({
       element,
       itemId: id,
       containerId,
+      scope: controller.scopeToken,
       disabled,
     });
   }, [controller, id, kind, containerId, disabled, args.ref]);
