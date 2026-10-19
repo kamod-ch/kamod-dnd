@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const treeBase = "http://localhost:14275";
+const treeBase = "http://localhost:14277";
 const ROOT_SENTINEL = "__tree_root__";
 
 test.describe("tree example", () => {
