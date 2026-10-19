@@ -13,7 +13,7 @@
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "test": "pnpm --filter @kamod-ch/dnd test",
-    "test:browser": "playwright test",
+    "test:browser": "pnpm build && playwright test",
     "test:browser:install": "playwright install chromium firefox webkit",
     "test:tree-browser": "pnpm --filter @kamod-dnd/spike-tree test:e2e",
     "check": "pnpm typecheck && pnpm format:check && pnpm lint && pnpm test && pnpm build && pnpm docs:check",
