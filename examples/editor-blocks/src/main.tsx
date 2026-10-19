@@ -4,7 +4,7 @@ import type { MoveIntent } from "@kamod-ch/dnd";
 import { applyMoveIntentToIds, useSortable, useSortableContainer } from "@kamod-ch/dnd/sortable";
 import { Button } from "@kamod-ch/ui/button";
 import { render } from "preact";
-import { useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 type BlockType = "heading" | "text" | "image";
 type Block = { id: string; type: BlockType; body: string };
@@ -222,8 +222,36 @@ function IsolationApp() {
   );
 }
 
+function ControlledOrderApp() {
+  const [order, setOrder] = useState(["a", "b"]);
+  useEffect(() => {
+    const host = window as Window & { __mutateOrder?: () => void };
+    host.__mutateOrder = () => setOrder(["b", "a"]);
+    return () => {
+      delete host.__mutateOrder;
+    };
+  }, []);
+  const onMove = (intent: MoveIntent<string>) => {
+    setOrder(applyMoveIntentToIds({ list: order }, intent).list ?? order);
+  };
+  return (
+    <DndProvider<string> onMove={onMove}>
+      <section data-testid="provider-controlled">
+        <p data-testid="order-controlled">{order.join(",")}</p>
+        <IsolationList order={order} name="controlled" />
+      </section>
+    </DndProvider>
+  );
+}
+
 const fixture = new URLSearchParams(window.location.search).get("fixture");
 render(
-  fixture === "provider-isolation" ? <IsolationApp /> : <App />,
+  fixture === "provider-isolation" ? (
+    <IsolationApp />
+  ) : fixture === "controlled-order" ? (
+    <ControlledOrderApp />
+  ) : (
+    <App />
+  ),
   document.getElementById("app")!,
 );

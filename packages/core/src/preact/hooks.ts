@@ -37,6 +37,10 @@ export function useDraggable<TData>(args: {
   useEffect(() => {
     controller.registerItem({ id, containerId, data, disabled });
     return () => controller.unregisterItem(id);
+  }, [controller, id]);
+
+  useEffect(() => {
+    controller.updateItemRegistration({ id, containerId, data, disabled });
   }, [controller, id, containerId, data, disabled]);
 
   useEffect(() => {

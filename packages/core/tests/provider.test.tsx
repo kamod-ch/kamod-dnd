@@ -252,4 +252,40 @@ describe("DndProvider", () => {
     fireEvent.click(screen.getByRole("button", { name: "up-c" }));
     expect(screen.getByTestId("order").textContent).toBe("b,c,a");
   });
+
+  it("updates item data during a drag without unregistering it", () => {
+    const onCancel = vi.fn();
+    let controller: DndController<ItemData> | null = null;
+
+    function Row({ data }: { data: ItemData }) {
+      const sortable = useSortable({ id: "a", containerId: "list", data });
+      const { ref } = useSortableContainer({ id: "list", itemIds: ["a", "b"] });
+      return (
+        <div ref={ref}>
+          <div ref={sortable.itemRef}>
+            <button ref={sortable.handleRef} type="button">
+              handle
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function App({ data }: { data: ItemData }) {
+      return (
+        <DndProvider<ItemData> onCancel={onCancel}>
+          <Probe onController={(next) => (controller = next)} />
+          <Row data={data} />
+        </DndProvider>
+      );
+    }
+
+    const view = render(<App data={{ n: 1 }} />);
+    controller!.handleDragStart("a");
+    expect(controller!.readSnapshot().phase).toBe("dragging");
+    view.rerender(<App data={{ n: 2 }} />);
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(controller!.readSnapshot().phase).toBe("dragging");
+    expect(controller!.getItemData("a")).toEqual({ n: 2 });
+  });
 });

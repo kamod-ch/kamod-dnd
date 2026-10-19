@@ -16,7 +16,7 @@ conditions, and update only its own status row when complete.
 | 007  | Announce pointer and keyboard drag lifecycle accurately      | P1       | M        | 005, 006     | DONE                                               |
 | 008  | Keep the tree entry framework-free                           | P2       | S        | 004          | DONE                                               |
 | 009  | Isolate drag sessions between provider instances             | P1       | M        | 008          | DONE                                               |
-| 010  | Reconcile controlled data and suppress no-op commits         | P1       | M        | 008, 009     | TODO                                               |
+| 010  | Reconcile controlled data and suppress no-op commits         | P1       | M        | 008, 009     | DONE                                               |
 | 003  | First public release of `@kamod-ch/dnd` including `./tree`   | P2       | S        | 002, 004–010 | BLOCKED (awaiting fixes and publish authorization) |
 | 011  | Restore focus, labels, and complete device accessibility     | P1       | M+manual | 008–010      | TODO                                               |
 | 012  | Graduate tree support to production/full matrix              | P2       | L        | 008–011      | TODO                                               |

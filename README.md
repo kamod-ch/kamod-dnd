@@ -98,3 +98,15 @@ Safe to import the package without DOM; mount `DndProvider` only on the client.
 **Trees (opt-in):** import `@kamod-ch/dnd/tree` and model each parent’s children as a container id. Pointer reparent uses nested drop-target selection in the engine; touch and screen-reader certification are still manual ([`docs/a11y-manual-checklist.md`](docs/a11y-manual-checklist.md), [`docs/tree-evaluation.md`](docs/tree-evaluation.md)).
 
 Manual verification for touch devices and screen readers: [`docs/a11y-manual-checklist.md`](docs/a11y-manual-checklist.md).
+
+## Session consistency
+
+The application owns list state. During an active drag the library only checks that its session still matches that state:
+
+- A data-only refresh keeps the drag and the eventual move uses the latest payload.
+- Removing the active item cancels with `source-removed`.
+- Changing the active item's container, or the order of its source or current preview container, cancels with `external-data-change`.
+- Disabling the active item cancels with `disabled`.
+- Dropping an item on its current same-container index completes without calling `dropRule` or `onMove`.
+
+The library does not resolve server conflicts or keep a stale preview after one of these cancellations.

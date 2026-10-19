@@ -1,7 +1,7 @@
 import { cleanup, render } from "@testing-library/preact";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { deliverElementDrag, deliverElementDrop } from "../src/engine/pragmatic/bindings.js";
-import { ITEM_TYPE, SCOPE_KEY } from "../src/engine/pragmatic/types.js";
+import { CONTAINER_TYPE, ITEM_TYPE, SCOPE_KEY } from "../src/engine/pragmatic/types.js";
 import { DndProvider, useDndContext } from "../src/preact/context.js";
 import { DndController } from "../src/session/controller.js";
 import type { DndSessionEvent } from "../src/session/types.js";
@@ -68,8 +68,7 @@ describe("provider isolation", () => {
     deliverElementDrag(controllerA, sourceFor(controllerA), [
       {
         data: {
-          type: ITEM_TYPE,
-          itemId: "b",
+          type: CONTAINER_TYPE,
           containerId: "list",
           [SCOPE_KEY]: controllerA.scopeToken,
         },
