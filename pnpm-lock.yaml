@@ -136,8 +136,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       '@atlaskit/pragmatic-drag-and-drop-auto-scroll':
-        specifier: ^2.0.0
-        version: 2.1.5
+        specifier: ^3.2.1
+        version: 3.2.1
       '@atlaskit/pragmatic-drag-and-drop-hitbox':
         specifier: ^3.0.0
         version: 3.0.0

@@ -1,5 +1,7 @@
 import { signal } from "@preact/signals";
 import type {
+  BatchDropRule,
+  BatchMoveIntent,
   CancelReason,
   DndContainerRegistration,
   DndId,
@@ -8,16 +10,31 @@ import type {
   DndSessionEvent,
   DndSessionSnapshot,
   DropRule,
+  GetContainerDropIndex,
   MoveIntent,
+  SortableOrientation,
 } from "./types.js";
+import type { PointerActivation } from "../engine/pragmatic/pointer-activation.js";
 import { buildMoveIntent, indexAfterRemoval, isNoOpMove } from "../sortable/move-helpers.js";
+import { indexEdgeFromPhysical } from "../sortable/orientation.js";
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 
 export type DndControllerOptions<TData> = {
   dropRule?: DropRule<TData>;
+  batchDropRule?: BatchDropRule<TData>;
   onMove?: (intent: MoveIntent<TData>) => boolean | void;
+  onBatchMove?: (intent: BatchMoveIntent<TData>) => boolean | void;
   onCancel?: (reason: CancelReason) => void;
+  pointerActivation?: PointerActivation;
 };
+
+export type ItemSessionState = {
+  isDragging: boolean;
+  isOver: boolean;
+};
+
+type ItemStateListener = (state: ItemSessionState) => void;
+type ContainerPreviewListener = (previewIndex: number | null) => void;
 
 export class DndController<TData = unknown> {
   readonly #phase = signal<DndPhase>("idle");
@@ -33,6 +50,12 @@ export class DndController<TData = unknown> {
   readonly #containers = new Map<DndId, DndContainerRegistration>();
   readonly #containerOrder = new Map<DndId, DndId[]>();
   readonly #handles = new Map<DndId, HTMLElement>();
+  readonly #itemElements = new Map<DndId, HTMLElement>();
+  readonly #detachedItemIds = new Set<DndId>();
+  readonly pointerActivation: PointerActivation | undefined;
+
+  readonly #itemStateListeners = new Map<DndId, Set<ItemStateListener>>();
+  readonly #containerPreviewListeners = new Map<DndId, Set<ContainerPreviewListener>>();
 
   readonly #options: DndControllerOptions<TData>;
   readonly #listeners = new Set<(event: DndSessionEvent<TData>) => void>();
@@ -42,6 +65,7 @@ export class DndController<TData = unknown> {
 
   constructor(options: DndControllerOptions<TData> = {}) {
     this.#options = options;
+    this.pointerActivation = options.pointerActivation;
   }
 
   subscribe(listener: (event: DndSessionEvent<TData>) => void): () => void {
@@ -49,6 +73,55 @@ export class DndController<TData = unknown> {
     return () => {
       this.#listeners.delete(listener);
     };
+  }
+
+  subscribeToItemState(itemId: DndId, listener: ItemStateListener): () => void {
+    let set = this.#itemStateListeners.get(itemId);
+    if (!set) {
+      set = new Set();
+      this.#itemStateListeners.set(itemId, set);
+    }
+    set.add(listener);
+    listener(this.#readItemState(itemId));
+    const disposers = [
+      this.#activeId.subscribe(() => listener(this.#readItemState(itemId))),
+      this.#overId.subscribe(() => listener(this.#readItemState(itemId))),
+    ];
+    return () => {
+      set!.delete(listener);
+      if (set!.size === 0) this.#itemStateListeners.delete(itemId);
+      disposers.forEach((d) => d());
+    };
+  }
+
+  subscribeToContainerPreview(containerId: DndId, listener: ContainerPreviewListener): () => void {
+    let set = this.#containerPreviewListeners.get(containerId);
+    if (!set) {
+      set = new Set();
+      this.#containerPreviewListeners.set(containerId, set);
+    }
+    set.add(listener);
+    listener(this.#readContainerPreview(containerId));
+    const disposers = [
+      this.#previewContainerId.subscribe(() => listener(this.#readContainerPreview(containerId))),
+      this.#previewIndex.subscribe(() => listener(this.#readContainerPreview(containerId))),
+    ];
+    return () => {
+      set!.delete(listener);
+      if (set!.size === 0) this.#containerPreviewListeners.delete(containerId);
+      disposers.forEach((d) => d());
+    };
+  }
+
+  #readItemState(itemId: DndId): ItemSessionState {
+    return {
+      isDragging: this.#activeId.value === itemId,
+      isOver: this.#overId.value === itemId,
+    };
+  }
+
+  #readContainerPreview(containerId: DndId): number | null {
+    return this.#previewContainerId.value === containerId ? this.#previewIndex.value : null;
   }
 
   #emit(event: DndSessionEvent<TData>): void {
@@ -89,10 +162,24 @@ export class DndController<TData = unknown> {
   };
 
   registerContainer(reg: DndContainerRegistration): void {
-    this.#containers.set(reg.id, reg);
+    const previous = this.#containers.get(reg.id);
+    this.#containers.set(reg.id, { ...previous, ...reg, id: reg.id });
     if (!this.#containerOrder.has(reg.id)) {
       this.#containerOrder.set(reg.id, []);
     }
+  }
+
+  updateContainerRegistration(reg: Partial<DndContainerRegistration> & { id: DndId }): void {
+    const previous = this.#containers.get(reg.id);
+    if (!previous) {
+      this.registerContainer({ ...reg, id: reg.id });
+      return;
+    }
+    this.#containers.set(reg.id, { ...previous, ...reg, id: reg.id });
+  }
+
+  getContainerRegistration(containerId: DndId): DndContainerRegistration | undefined {
+    return this.#containers.get(containerId);
   }
 
   unregisterContainer(id: DndId): void {
@@ -126,6 +213,7 @@ export class DndController<TData = unknown> {
 
   registerItem(reg: DndItemRegistration<TData>): void {
     this.#items.set(reg.id, reg);
+    this.#detachedItemIds.delete(reg.id);
   }
 
   updateItemRegistration(reg: DndItemRegistration<TData>): void {
@@ -150,8 +238,25 @@ export class DndController<TData = unknown> {
     // at drag start so a fresh data object cannot retrigger snapshot subscribers.
   }
 
+  #itemStillInOrder(itemId: DndId): boolean {
+    for (const ids of this.#containerOrder.values()) {
+      if (ids.includes(itemId)) return true;
+    }
+    return false;
+  }
+
+  detachItem(id: DndId): void {
+    if (this.#activeId.value === id && this.#itemStillInOrder(id)) {
+      this.#detachedItemIds.add(id);
+      this.#handles.delete(id);
+      return;
+    }
+    this.unregisterItem(id);
+  }
+
   unregisterItem(id: DndId): void {
     this.#items.delete(id);
+    this.#detachedItemIds.delete(id);
     if (this.#activeId.value === id) {
       this.cancel("source-removed");
     }
@@ -161,12 +266,28 @@ export class DndController<TData = unknown> {
     return this.#items.get(id)?.data;
   }
 
+  isItemDetached(id: DndId): boolean {
+    return this.#detachedItemIds.has(id);
+  }
+
   registerHandle(id: DndId, element: HTMLElement): void {
     this.#handles.set(id, element);
   }
 
   unregisterHandle(id: DndId, element: HTMLElement): void {
     if (this.#handles.get(id) === element) this.#handles.delete(id);
+  }
+
+  registerItemElement(id: DndId, element: HTMLElement): void {
+    this.#itemElements.set(id, element);
+  }
+
+  unregisterItemElement(id: DndId, element: HTMLElement): void {
+    if (this.#itemElements.get(id) === element) this.#itemElements.delete(id);
+  }
+
+  getItemElement(id: DndId): HTMLElement | undefined {
+    return this.#itemElements.get(id);
   }
 
   focusHandle(id: DndId): boolean {
@@ -191,7 +312,53 @@ export class DndController<TData = unknown> {
     this.#emit({ type: "start", itemId, data: item.data });
   }
 
-  handleDragOver(args: { overId: DndId | null; overContainerId: DndId; edge: Edge | null }): void {
+  setPreviewIndex(containerId: DndId, targetIndex: number): void {
+    if (this.#phase.value !== "dragging") return;
+    const activeId = this.#activeId.value;
+    if (!activeId) return;
+    const item = this.#items.get(activeId);
+    if (!item || item.containerId !== containerId) return;
+
+    const targetIds = this.getContainerIds(containerId);
+    const clamped = Math.max(0, Math.min(targetIndex, targetIds.length));
+
+    this.#overId.value = null;
+    this.#overContainerId.value = containerId;
+    this.#previewContainerId.value = containerId;
+    this.#previewIndex.value = clamped;
+
+    const intent = buildMoveIntent({
+      itemId: activeId,
+      sourceContainerId: item.containerId,
+      targetContainerId: containerId,
+      targetIndex: clamped,
+      data: item.data,
+    });
+
+    const allowed = this.#options.dropRule ? this.#options.dropRule(intent) : true;
+    this.#canDrop.value = allowed;
+
+    const overKey = `${containerId}\0${clamped}\0${allowed}\0keyboard`;
+    if (overKey === this.#lastOverKey) return;
+    this.#lastOverKey = overKey;
+    this.#emit({
+      type: "over",
+      itemId: activeId,
+      sourceContainerId: item.containerId,
+      containerId,
+      targetIndex: clamped,
+      overId: null,
+      canDrop: allowed,
+    });
+  }
+
+  handleDragOver(args: {
+    overId: DndId | null;
+    overContainerId: DndId;
+    edge: Edge | null;
+    clientX?: number;
+    clientY?: number;
+  }): void {
     if (this.#phase.value !== "dragging") return;
     const activeId = this.#activeId.value;
     if (!activeId) return;
@@ -203,15 +370,31 @@ export class DndController<TData = unknown> {
 
     const sourceIds = this.getContainerIds(item.containerId);
     const targetIds = this.getContainerIds(args.overContainerId);
-    const edge = args.edge === "bottom" ? "bottom" : "top";
-    const targetIndex = indexAfterRemoval(
-      sourceIds,
-      targetIds,
-      activeId,
-      args.overId,
-      edge,
-      item.containerId === args.overContainerId,
-    );
+    const containerReg = this.#containers.get(args.overContainerId);
+    const orientation: SortableOrientation = containerReg?.orientation ?? "vertical";
+    const direction = containerReg?.direction ?? "ltr";
+
+    let targetIndex: number;
+    if (args.overId === null && containerReg?.getDropIndex && args.clientX !== undefined) {
+      const projected = containerReg.getDropIndex({
+        containerId: args.overContainerId,
+        clientX: args.clientX,
+        clientY: args.clientY ?? 0,
+        itemIds: targetIds,
+        activeId,
+      });
+      targetIndex = Math.max(0, Math.min(projected, targetIds.length));
+    } else {
+      const edge = indexEdgeFromPhysical(orientation, direction, args.edge);
+      targetIndex = indexAfterRemoval(
+        sourceIds,
+        targetIds,
+        activeId,
+        args.overId,
+        edge,
+        item.containerId === args.overContainerId,
+      );
+    }
 
     this.#previewContainerId.value = args.overContainerId;
     this.#previewIndex.value = targetIndex;
@@ -318,6 +501,33 @@ export class DndController<TData = unknown> {
     return true;
   }
 
+  tryCommitBatch(intent: BatchMoveIntent<TData>): boolean {
+    const batchRule = this.#options.batchDropRule;
+    for (const member of intent.members) {
+      const allowed = batchRule
+        ? batchRule({
+            ...member,
+            targetContainerId: intent.targetContainerId,
+            targetIndex: intent.targetIndex,
+          })
+        : this.#options.dropRule
+          ? this.#options.dropRule({
+              itemId: member.id,
+              sourceContainerId: member.containerId,
+              targetContainerId: intent.targetContainerId,
+              targetIndex: intent.targetIndex,
+              data: member.data,
+            })
+          : true;
+      if (!allowed) return false;
+    }
+    if (!this.#options.onBatchMove) return false;
+    const accepted = this.#options.onBatchMove(intent);
+    if (accepted === false) return false;
+    this.#emit({ type: "dropBatch", intent });
+    return true;
+  }
+
   reset(): void {
     this.#phase.value = "idle";
     this.#activeId.value = null;
@@ -328,6 +538,7 @@ export class DndController<TData = unknown> {
     this.#previewContainerId.value = null;
     this.#activeData.value = null;
     this.#lastOverKey = null;
+    this.#detachedItemIds.clear();
   }
 
   dispose(): void {
@@ -336,7 +547,11 @@ export class DndController<TData = unknown> {
     this.#containers.clear();
     this.#containerOrder.clear();
     this.#handles.clear();
+    this.#itemElements.clear();
     this.#listeners.clear();
+    this.#itemStateListeners.clear();
+    this.#containerPreviewListeners.clear();
+    this.#detachedItemIds.clear();
   }
 
   #completeNoOp(intent: MoveIntent<TData>): boolean {
@@ -352,3 +567,5 @@ export class DndController<TData = unknown> {
 function sameIds(left: readonly DndId[], right: readonly DndId[]): boolean {
   return left.length === right.length && left.every((id, index) => id === right[index]);
 }
+
+export type { GetContainerDropIndex, SortableOrientation };

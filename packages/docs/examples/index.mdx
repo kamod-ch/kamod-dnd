@@ -7,8 +7,9 @@ import { ExampleFrame } from "../components/shared/ExampleFrame";
 import { SortableListDemo, sortableListDemoCode } from "../components/demos/SortableListDemo";
 import { KanbanDemo, kanbanDemoCode } from "../components/demos/KanbanDemo";
 import { EditorBlocksDemo, editorBlocksDemoCode } from "../components/demos/EditorBlocksDemo";
+import { HorizontalListDemo, horizontalListDemoCode } from "../components/demos/HorizontalListDemo";
 
-Each card runs the real `@kamod-ch/dnd` package from this workspace — not a mock. Drag from the **⠿** handle; use the keyboard buttons on Kanban and editor demos to move items without a pointer.
+Each card runs the real `@kamod-ch/dnd` package from this workspace — not a mock. Drag from the **⠿** handle. On sortable rows, **Space/Enter** picks up and drops; **arrow keys** move within the same container. Kanban and editor demos also expose keyboard buttons for cross-container moves.
 
 ## Sortable list
 
@@ -20,7 +21,21 @@ Single container, reorder by index. Target index is computed **after removing** 
   description="Minimal pattern from the package README — one container id and applyMoveIntentToIds."
   preview={<SortableListDemo />}
   code={sortableListDemoCode}
-  badges={["sortable", "handle"]}
+  badges={["sortable", "handle", "keyboard"]}
+  class="not-prose my-8"
+/>
+
+## Horizontal strip
+
+Same sortable hooks with `orientation: "horizontal"` on the container (LTR chip row).
+
+<ExampleFrame
+  id="horizontal-list"
+  title="Horizontal list"
+  description="Left/right closest-edge hit testing; array order is unchanged (no id reversal for RTL)."
+  preview={<HorizontalListDemo />}
+  code={horizontalListDemoCode}
+  badges={["orientation", "horizontal"]}
   class="not-prose my-8"
 />
 

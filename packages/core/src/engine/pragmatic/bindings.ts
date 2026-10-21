@@ -12,6 +12,7 @@ import {
 import type { DndController } from "../../session/controller.js";
 import type { DndId } from "../../session/types.js";
 import { selectScopedDropTarget, type DropTargetLike } from "./drop-target.js";
+import { bindPointerActivationOrigin, pointerActivationAllowsDrag } from "./pointer-activation.js";
 import { CONTAINER_TYPE, ITEM_TYPE, SCOPE_KEY } from "./types.js";
 
 export type EngineBindingOptions = {
@@ -35,6 +36,7 @@ export function deliverElementDragOver<TData>(
   controller: DndController<TData>,
   data: Record<string, unknown>,
   dropTargets: ReadonlyArray<DropTargetLike>,
+  input?: { clientX: number; clientY: number },
 ): void {
   if (!ownsElementSource(data, controller.scopeToken)) return;
   const target = selectScopedDropTarget(dropTargets, controller.scopeToken);
@@ -48,6 +50,8 @@ export function deliverElementDragOver<TData>(
     overId: isContainer ? null : target.data.itemId ? String(target.data.itemId) : null,
     overContainerId: String(target.data.containerId),
     edge,
+    clientX: input?.clientX,
+    clientY: input?.clientY,
   });
 }
 
@@ -93,7 +97,12 @@ export function bindPragmaticEngine<TData>(
         deliverElementDragStart(controller, source.data);
       },
       onDrag: ({ source, location }) => {
-        deliverElementDragOver(controller, source.data, location.current.dropTargets);
+        deliverElementDragOver(
+          controller,
+          source.data,
+          location.current.dropTargets,
+          location.current.input,
+        );
       },
       onDrop: ({ source, location }) => {
         const clear = elementDropShouldClear({
@@ -132,16 +141,23 @@ export function registerDraggableElement<TData>(args: {
   disabled?: boolean;
 }): () => void {
   if (args.disabled) return () => {};
-  return draggable({
-    element: args.element,
-    dragHandle: args.handle,
-    getInitialData: () => ({
-      type: ITEM_TYPE,
-      itemId: args.itemId,
-      containerId: args.containerId,
-      [SCOPE_KEY]: args.scope,
+  const cleanups: Array<() => void> = [];
+  cleanups.push(bindPointerActivationOrigin(args.handle));
+  cleanups.push(
+    draggable({
+      element: args.element,
+      dragHandle: args.handle,
+      canDrag: ({ input }) =>
+        pointerActivationAllowsDrag(args.handle, input, args.controller.pointerActivation),
+      getInitialData: () => ({
+        type: ITEM_TYPE,
+        itemId: args.itemId,
+        containerId: args.containerId,
+        [SCOPE_KEY]: args.scope,
+      }),
     }),
-  });
+  );
+  return () => cleanups.forEach((fn) => fn());
 }
 
 export function registerItemDropTarget(args: {
@@ -150,8 +166,13 @@ export function registerItemDropTarget(args: {
   containerId: DndId;
   scope: string;
   disabled?: boolean;
+  orientation?: "vertical" | "horizontal";
 }): () => void {
   if (args.disabled) return () => {};
+  const allowedEdges: Edge[] =
+    args.orientation === "horizontal"
+      ? (["left", "right"] as Edge[])
+      : (["top", "bottom"] as Edge[]);
   return dropTargetForElements({
     element: args.element,
     getData: ({ input, element }) =>
@@ -165,7 +186,7 @@ export function registerItemDropTarget(args: {
         {
           element,
           input,
-          allowedEdges: ["top", "bottom"] as Edge[],
+          allowedEdges,
         },
       ),
   });

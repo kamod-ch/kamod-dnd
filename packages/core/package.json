@@ -1,6 +1,6 @@
 {
   "name": "@kamod-ch/dnd",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Headless Preact DnD primitives with signals, sortable lists, and accessible keyboard support.",
   "keywords": [
     "accessibility",
@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^4.0.0",
-    "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^2.0.0",
+    "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^3.2.1",
     "@atlaskit/pragmatic-drag-and-drop-hitbox": "^3.0.0"
   },
   "devDependencies": {

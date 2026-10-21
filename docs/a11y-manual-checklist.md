@@ -1,6 +1,12 @@
 # Manuelle Accessibility- und Touch-Checkliste
 
-Nicht in CI ausgeführt (2026-10-18).
+Nicht in CI ausgeführt. Engineering prep for 0.4 adds batch/tree message keys and handle keyboard; **device sign-off still required**.
+
+## Certification log
+
+| Date | Package version | Tester | VoiceOver | NVDA | iOS touch | Android touch | Reduced motion | Notes |
+| ---- | --------------- | ------ | --------- | ---- | --------- | ------------- | -------------- | ----- |
+|      | 0.4.0           |        | [ ]       | [ ]  | [ ]       | [ ]           | [ ]            |       |
 
 Automatisierte DOM-Tests am 2026-10-19 prüfen Fokus nach Move/Cancel, menschliche Labels und das Tree-Beispiel in Chromium, Firefox und WebKit. Sie schließen keinen der folgenden Punkte ab. Offen bleiben VoiceOver + Safari, NVDA + Firefox, iOS Safari, Android Chrome und `prefers-reduced-motion` auf einem echten Gerät. Für den Baum zusätzlich: Fokusreihenfolge, `aria-level`/`aria-expanded`, Reparent-Ansage, Scrollen und Zyklus-Ablehnung.
 

@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.4.0 – 2026-10-21
+
+Roadmap after 0.3 (line 68).
+
+- **Batch:** `BatchMoveIntent`, `commitBatchMove`, `batchIndexFromSingle`, `stableBatchMembers`, `applyBatchToContainers`; `DndProvider` `onBatchMove` / `batchDropRule`; `controller.tryCommitBatch` + `dropBatch` session event and live-region `droppedBatch`.
+- **Pointer activation:** `pointerActivation?: { distance?, delay? }` on `DndProvider`; `canDrag` gate on pragmatic draggable handles.
+- **Drag ghost:** headless `DragGhostPortal` + `getItemElement` registry for fixed-position preview.
+- **A11y messages:** batch + `reparented` keys; certification log table in `docs/a11y-manual-checklist.md`.
+- **Docs:** [grid-evaluation.md](docs/grid-evaluation.md), [ADR 002 React adapter](docs/decisions/002-react-adapter.md), [tree-ga.md](docs/tree-ga.md). Tree subpath remains experimental until manual checklist passes (0.5.0).
+
+## 0.3.0 – 2026-10-21
+
+Must-have quality and extension release (Plan 0.3).
+
+- **Auto-scroll:** bump `@atlaskit/pragmatic-drag-and-drop-auto-scroll` to 3.x so `scrollRef` works with pragmatic 4 in Firefox and WebKit.
+- **Performance:** live region announcements moved to `DndAnnouncer` (no provider re-render on every hover); `useSortableItemState` / `useSortableContainerPreview` for selective subscriptions; `useDndState` unchanged for full snapshots.
+- **Keyboard:** sortable handles support Space/Enter pick-up/drop and arrow keys within the same container; optional `handleProps` (`touchAction: "none"`, etc.). Existing `moveByKeyboard` buttons kept for transfers.
+- **Horizontal:** `orientation: "vertical" | "horizontal"` on `useSortableContainer`; LTR/RTL via container `dir`.
+- **Virtualization seams:** `getDropIndex` on container hits; active item **detaches** on row unmount while its id remains in order (pointer source node may still need pinning — see docs).
+- Docs: horizontal strip demo, updated examples copy.
+
 ## 0.2.0 – 2026-10-19
 
 First publish candidate including hierarchical tree helpers (Plan 002).

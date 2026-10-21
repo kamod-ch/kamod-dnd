@@ -498,4 +498,46 @@ describe("drag announcements", () => {
     await flushAnimationFrame();
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "handle-a" }));
   });
+
+  it("reorders via Space and ArrowDown on the sortable handle", async () => {
+    function Row() {
+      const { ref } = useSortableContainer({ id: "list", itemIds: ["a", "b"] });
+      const sortable = useSortable({ id: "a", containerId: "list", data: { n: 1 } });
+      return (
+        <div ref={ref}>
+          <button {...sortable.handleProps} aria-label="handle-a">
+            handle-a
+          </button>
+        </div>
+      );
+    }
+
+    function App() {
+      const [order, setOrder] = useState(["a", "b"]);
+      return (
+        <DndProvider<ItemData>
+          locale={locale}
+          onMove={(intent) => {
+            setOrder(applyMoveIntentToIds({ list: order }, intent).list ?? order);
+            return true;
+          }}
+        >
+          <Row />
+          <div data-testid="order">{order.join(",")}</div>
+        </DndProvider>
+      );
+    }
+
+    installAnimationFrame();
+    render(<App />);
+    const handle = screen.getByRole("button", { name: "handle-a" });
+    handle.focus();
+    fireEvent.keyDown(handle, { key: " " });
+    fireEvent.keyDown(handle, { key: "ArrowDown" });
+    fireEvent.keyDown(handle, { key: "Enter" });
+    await flushAnimationFrame();
+    expect(screen.getByTestId("order").textContent).toBe("b,a");
+    expect(statusText()).toContain("drop a");
+    expect(document.activeElement).toBe(handle);
+  });
 });

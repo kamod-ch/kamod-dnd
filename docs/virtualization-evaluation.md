@@ -53,3 +53,7 @@ A follow-up implementation plan would add two extension points and leave `MoveIn
 2. Let the application project a container hit to an index (`getContainerDropIndex(containerId, clientY)`) so a pointer over unmounted space does not always append.
 
 Until both exist, virtualization stays outside the supported API.
+
+## Update (0.3.0)
+
+Core now ships both seams: `getDropIndex` on `useSortableContainer` and detach-on-unmount for the active id while it remains in `itemIds`. Pointer drags may still end when Pragmatic tears down the source `draggable()` node — keep the active row mounted or use a pinned overlay during autoscroll (see README).

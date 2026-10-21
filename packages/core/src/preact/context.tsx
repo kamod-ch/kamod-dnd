@@ -1,12 +1,13 @@
 import { createContext } from "preact";
-import { useContext, useEffect, useRef, useState } from "preact/hooks";
+import { useContext, useEffect, useMemo, useRef } from "preact/hooks";
 import type { ComponentChildren, RefObject } from "preact";
 import { DndController, type DndControllerOptions } from "../session/controller.js";
-import type { DndId, DndSessionEvent } from "../session/types.js";
+import type { BatchMoveIntent, DndId } from "../session/types.js";
+import type { PointerActivation } from "../engine/pragmatic/pointer-activation.js";
 import { bindPragmaticEngine } from "../engine/pragmatic/bindings.js";
 import type { DndLocale } from "../accessibility/messages.js";
 import { resolveMessage, type DndMessageKey } from "../accessibility/messages.js";
-import { DndLiveRegion } from "../accessibility/live-region.js";
+import { DndAnnouncer } from "./announcer.js";
 
 export type DndProviderProps<TData> = DndControllerOptions<TData> & {
   children: ComponentChildren;
@@ -16,6 +17,7 @@ export type DndProviderProps<TData> = DndControllerOptions<TData> & {
   getItemLabel?: (id: DndId, data: TData) => string;
   getContainerLabel?: (id: DndId) => string;
   focusFallbackRef?: RefObject<HTMLElement | null>;
+  pointerActivation?: PointerActivation;
 };
 
 export type DndContextValue<TData> = {
@@ -30,49 +32,6 @@ export type DndContextValue<TData> = {
 
 const DndContext = createContext<DndContextValue<unknown> | null>(null);
 
-function announceSessionEvent<TData>(
-  locale: DndLocale | undefined,
-  event: DndSessionEvent<TData>,
-  setLiveMessage: (message: string) => void,
-  itemLabel: (id: DndId, data: TData | undefined) => string,
-  containerLabel: (id: DndId) => string,
-) {
-  if (event.type === "start") {
-    setLiveMessage(
-      resolveMessage(locale, "pickedUp", { item: itemLabel(event.itemId, event.data) }),
-    );
-    return;
-  }
-  if (event.type === "over") {
-    if (!event.canDrop) return;
-    if (event.containerId === event.sourceContainerId) {
-      setLiveMessage(
-        resolveMessage(locale, "moved", {
-          item: itemLabel(event.itemId, undefined),
-          position: String(event.targetIndex + 1),
-        }),
-      );
-      return;
-    }
-    setLiveMessage(
-      resolveMessage(locale, "movedToContainer", {
-        item: itemLabel(event.itemId, undefined),
-        container: containerLabel(event.containerId),
-      }),
-    );
-    return;
-  }
-  if (event.type === "drop") {
-    setLiveMessage(
-      resolveMessage(locale, "dropped", {
-        item: itemLabel(event.intent.itemId, event.intent.data),
-      }),
-    );
-    return;
-  }
-  setLiveMessage(resolveMessage(locale, "cancelled", { item: itemLabel(event.itemId, undefined) }));
-}
-
 export function DndProvider<TData>({
   children,
   locale,
@@ -81,6 +40,7 @@ export function DndProvider<TData>({
   getItemLabel,
   getContainerLabel,
   focusFallbackRef,
+  pointerActivation,
   ...options
 }: DndProviderProps<TData>) {
   const optionsRef = useRef(options);
@@ -88,19 +48,17 @@ export function DndProvider<TData>({
   const labelsRef = useRef({ getItemLabel, getContainerLabel });
   labelsRef.current = { getItemLabel, getContainerLabel };
 
-  const itemLabel = (id: DndId, data: TData | undefined) => {
+  const itemLabelFn = (id: DndId, data: TData | undefined) => {
     const resolve = labelsRef.current.getItemLabel;
     const payload = data ?? controllerRef.current?.getItemData(id);
     if (resolve && payload !== undefined) return resolve(id, payload);
     return id;
   };
-  const containerLabel = (id: DndId) => labelsRef.current.getContainerLabel?.(id) ?? id;
+  const containerLabelFn = (id: DndId) => labelsRef.current.getContainerLabel?.(id) ?? id;
 
   const scheduleFocusRef = useRef<(id: DndId) => void>(() => {});
   scheduleFocusRef.current = (itemId) => {
     const fallback = focusFallbackRef?.current ?? null;
-    // Two frames: the first lets Preact commit and the browser drop focus from
-    // an unmounted control; the second reads the handle registry.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const controller = controllerRef.current;
@@ -113,13 +71,26 @@ export function DndProvider<TData>({
   const controllerRef = useRef<DndController<TData> | null>(null);
   if (!controllerRef.current) {
     controllerRef.current = new DndController<TData>({
+      ...optionsRef.current,
+      pointerActivation,
       dropRule: (intent) => {
         const rule = optionsRef.current.dropRule;
         return rule ? rule(intent) : true;
       },
+      batchDropRule: (ctx) => {
+        const rule = optionsRef.current.batchDropRule;
+        return rule ? rule(ctx) : true;
+      },
       onMove: (intent) => {
         const accepted = optionsRef.current.onMove?.(intent);
         if (accepted !== false) scheduleFocusRef.current(intent.itemId);
+        return accepted;
+      },
+      onBatchMove: (intent: BatchMoveIntent<TData>) => {
+        const accepted = optionsRef.current.onBatchMove?.(intent);
+        if (accepted !== false && intent.itemIds[0]) {
+          scheduleFocusRef.current(intent.itemIds[0]);
+        }
         return accepted;
       },
       onCancel: (reason) => {
@@ -132,21 +103,24 @@ export function DndProvider<TData>({
   const localeRef = useRef(locale);
   localeRef.current = locale;
 
-  const [liveMessage, setLiveMessage] = useState("");
+  const setMessageRef = useRef<(message: string) => void>(() => {});
 
-  const announce = (key: DndMessageKey, args: Record<string, string>) => {
-    setLiveMessage(resolveMessage(localeRef.current, key, args));
-  };
+  const announceRef = useRef((key: DndMessageKey, args: Record<string, string>) => {
+    setMessageRef.current(resolveMessage(localeRef.current, key, args));
+  });
 
-  const value: DndContextValue<TData> = {
-    controller,
-    locale,
-    announce,
-    reducedMotion,
-    itemLabel: (id, data) => itemLabel(id, data),
-    containerLabel,
-    restoreHandleFocus: (id) => scheduleFocusRef.current(id),
-  };
+  const value = useMemo(
+    (): DndContextValue<TData> => ({
+      controller,
+      locale,
+      announce: announceRef.current,
+      reducedMotion,
+      itemLabel: (id, data) => itemLabelFn(id, data),
+      containerLabel: containerLabelFn,
+      restoreHandleFocus: (id) => scheduleFocusRef.current(id),
+    }),
+    [controller, locale, reducedMotion],
+  );
 
   useEffect(() => {
     const scrollEl = scrollRef?.current ?? null;
@@ -163,13 +137,11 @@ export function DndProvider<TData>({
 
   useEffect(() => {
     return controller.subscribe((event) => {
-      announceSessionEvent(
-        localeRef.current,
-        event,
-        setLiveMessage,
-        (id, data) => itemLabel(id, data),
-        containerLabel,
-      );
+      if (event.type === "dropBatch") {
+        const first = event.intent.itemIds[0];
+        if (first) scheduleFocusRef.current(first);
+        return;
+      }
       if (event.type === "drop" || event.type === "cancel") {
         const itemId = event.type === "drop" ? event.intent.itemId : event.itemId;
         scheduleFocusRef.current(itemId);
@@ -180,7 +152,13 @@ export function DndProvider<TData>({
   return (
     <DndContext.Provider value={value as DndContextValue<unknown>}>
       {children}
-      <DndLiveRegion message={liveMessage} />
+      <DndAnnouncer
+        controller={controller}
+        localeRef={localeRef}
+        itemLabel={itemLabelFn}
+        containerLabel={containerLabelFn}
+        setMessageRef={setMessageRef}
+      />
     </DndContext.Provider>
   );
 }

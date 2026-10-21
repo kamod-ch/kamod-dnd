@@ -1,4 +1,14 @@
-export type DndMessageKey = "pickedUp" | "moved" | "movedToContainer" | "dropped" | "cancelled";
+export type DndMessageKey =
+  | "pickedUp"
+  | "moved"
+  | "movedToContainer"
+  | "dropped"
+  | "cancelled"
+  | "pickedUpBatch"
+  | "movedBatchToContainer"
+  | "droppedBatch"
+  | "cancelledBatch"
+  | "reparented";
 
 export type DndMessages = Record<DndMessageKey, (args: Record<string, string>) => string>;
 
@@ -8,6 +18,11 @@ export const defaultMessages: DndMessages = {
   movedToContainer: ({ item, container }) => `Moved ${item} to ${container}.`,
   dropped: ({ item }) => `Dropped ${item}.`,
   cancelled: ({ item }) => `Cancelled moving ${item}.`,
+  pickedUpBatch: ({ count, items }) => `Picked up ${count} items: ${items}.`,
+  movedBatchToContainer: ({ count, container }) => `Moved ${count} items to ${container}.`,
+  droppedBatch: ({ count }) => `Dropped ${count} items.`,
+  cancelledBatch: ({ item }) => `Cancelled moving ${item}.`,
+  reparented: ({ item, container }) => `Moved ${item} under ${container}.`,
 };
 
 export type DndLocale = {

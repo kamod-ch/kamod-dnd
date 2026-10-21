@@ -27,6 +27,23 @@ test.describe("editor keyboard moves", () => {
     await expect(status).not.toContainText("b2");
   });
 
+  test("Space, ArrowDown, and Enter on the handle reorder blocks", async ({ page }) => {
+    const before = await page
+      .locator("[data-testid^='block-']")
+      .evaluateAll((els) => els.map((el) => el.getAttribute("data-testid")));
+    const handle = page.getByTestId("handle-b1");
+    await handle.focus();
+    await page.keyboard.press("Space");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await expect(handle).toBeFocused();
+    const after = await page
+      .locator("[data-testid^='block-']")
+      .evaluateAll((els) => els.map((el) => el.getAttribute("data-testid")));
+    expect(after.indexOf("block-b1")).toBeGreaterThan(before.indexOf("block-b1")!);
+    await expect(page.getByRole("status")).toContainText("Chapter title");
+  });
+
   test("escape restores the dragged handle", async ({ page }) => {
     const handle = page.getByTestId("handle-b1");
     const box = await handle.boundingBox();

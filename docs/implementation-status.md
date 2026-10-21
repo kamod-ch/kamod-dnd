@@ -1,6 +1,6 @@
 # Implementation Status
 
-Stand: 2026-10-18 (nach Beta-Härtung).
+Stand: 2026-10-21 (0.3.0 must-haves).
 
 ## Aufgaben (Ursprungsplan)
 
@@ -19,8 +19,8 @@ Stand: 2026-10-18 (nach Beta-Härtung).
 
 ```bash
 pnpm check                                    # grün
-pnpm test                                     # 11 Vitest
-pnpm exec playwright test                     # 24 grün (chromium, firefox, webkit)
+pnpm test                                     # 77+ Vitest (packages/core)
+pnpm exec playwright test                     # editor/kanban/tree e2e (chromium, firefox, webkit)
 node scripts/qa-tarball-consumer.mjs          # grün
 node scripts/benchmark-drag.mjs               # docs/performance/drag-lists.md
 node scripts/bundle-size-report.mjs           # docs/performance/bundle-size.md

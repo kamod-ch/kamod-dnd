@@ -1,8 +1,15 @@
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "preact/hooks";
 import { useDndContext } from "../preact/context.js";
-import { useDraggable, useDroppable, useDndState } from "../preact/hooks.js";
-import type { DndId } from "../session/types.js";
+import {
+  useDraggable,
+  useDroppable,
+  useSortableContainerPreview,
+  useSortableItemState,
+} from "../preact/hooks.js";
+import type { DndId, GetContainerDropIndex, SortableOrientation } from "../session/types.js";
 import { computeKeyboardMove, type KeyboardMoveAction } from "../accessibility/keyboard.js";
+import { readDirection } from "./orientation.js";
+import { handleSortableHandleKeyDown } from "./handle-keyboard.js";
 
 export { applyMoveIntentToIds } from "./apply-move.js";
 
@@ -10,15 +17,28 @@ export type SortableContainerProps = {
   id: DndId;
   itemIds: readonly DndId[];
   disabled?: boolean;
+  orientation?: SortableOrientation;
+  getDropIndex?: GetContainerDropIndex;
 };
 
 export function useSortableContainer(props: SortableContainerProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { controller } = useDndContext();
+  const orientation = props.orientation ?? "vertical";
+  const getDropIndexRef = useRef(props.getDropIndex);
+  getDropIndexRef.current = props.getDropIndex;
 
   useEffect(() => {
     controller.setContainerOrder(props.id, [...props.itemIds]);
   }, [controller, props.id, props.itemIds]);
+
+  useEffect(() => {
+    controller.updateContainerRegistration({
+      id: props.id,
+      orientation,
+      getDropIndex: getDropIndexRef.current,
+    });
+  }, [controller, props.id, orientation, props.getDropIndex]);
 
   useDroppable({
     ref,
@@ -27,13 +47,13 @@ export function useSortableContainer(props: SortableContainerProps) {
       kind: "container",
       containerId: props.id,
       disabled: props.disabled,
+      orientation,
     },
   });
 
-  const state = useDndState();
-  const previewInContainer = state.previewContainerId === props.id ? state.previewIndex : null;
+  const previewIndex = useSortableContainerPreview(props.id);
 
-  return { ref, previewIndex: previewInContainer };
+  return { ref, previewIndex };
 }
 
 export type SortableItemProps<TData> = {
@@ -70,9 +90,28 @@ export function useSortable<TData>(props: SortableItemProps<TData>) {
     },
   });
 
-  const state = useDndState<TData>();
-  const isDragging = state.activeId === props.id;
-  const isOver = state.overId === props.id;
+  const { isDragging, isOver } = useSortableItemState(props.id);
+
+  useLayoutEffect(() => {
+    const handle = handleRef.current;
+    if (!handle) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      const reg = controller.getContainerRegistration(props.containerId);
+      const orientation = reg?.orientation ?? "vertical";
+      const direction = readDirection(itemRef.current?.parentElement ?? handle);
+      handleSortableHandleKeyDown({
+        event,
+        controller,
+        itemId: props.id,
+        containerId: props.containerId,
+        orientation,
+        direction,
+        disabled: props.disabled,
+      });
+    };
+    handle.addEventListener("keydown", onKeyDown);
+    return () => handle.removeEventListener("keydown", onKeyDown);
+  }, [controller, props.id, props.containerId, props.disabled]);
 
   const moveByKeyboard = (action: KeyboardMoveAction) => {
     const order = controller.getContainerIds(props.containerId);
@@ -100,9 +139,22 @@ export function useSortable<TData>(props: SortableItemProps<TData>) {
     });
   };
 
+  const handleProps = useMemo(() => {
+    return {
+      ref: handleRef,
+      type: "button" as const,
+      disabled: props.disabled,
+      style: {
+        touchAction: "none" as const,
+        cursor: props.disabled ? "not-allowed" : "grab",
+      },
+    };
+  }, [props.disabled]);
+
   return {
     itemRef,
     handleRef,
+    handleProps,
     isDragging,
     isOver,
     moveByKeyboard,

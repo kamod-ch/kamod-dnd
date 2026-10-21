@@ -89,7 +89,7 @@ function SortableListBody({ order }: { order: string[] }) {
 }
 
 function SortableRow({ id, label }: { id: string; label: string }) {
-  const { itemRef, handleRef, isDragging } = useSortable({
+  const { itemRef, handleProps, isDragging } = useSortable({
     id,
     containerId: "list",
     data: { id, label },
@@ -101,13 +101,7 @@ function SortableRow({ id, label }: { id: string; label: string }) {
       class="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 shadow-sm"
       style={{ opacity: isDragging ? 0.55 : 1 }}
     >
-      <button
-        ref={handleRef}
-        type="button"
-        aria-label={`Drag ${label}`}
-        class="text-muted-foreground"
-        style={{ touchAction: "none", cursor: "grab" }}
-      >
+      <button {...handleProps} aria-label={`Drag ${label}`} class="text-muted-foreground">
         ⠿
       </button>
       <span class="text-sm font-medium text-foreground">{label}</span>

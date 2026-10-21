@@ -78,6 +78,36 @@ describe("DndController", () => {
     expect(controller.readSnapshot().phase).toBe("idle");
   });
 
+  it("detaches the active item on unmount while it remains in container order", () => {
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({ onCancel });
+    setupList(controller, ["a", "b"]);
+    controller.handleDragStart("a");
+    controller.detachItem("a");
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(controller.readSnapshot().phase).toBe("dragging");
+    expect(controller.isItemDetached("a")).toBe(true);
+    expect(controller.getItemData("a")).toEqual({ n: 1 });
+  });
+
+  it("uses getDropIndex for container hits without an over item", () => {
+    const controller = new DndController<{ n: number }>({});
+    setupList(controller, ["a", "b", "c"]);
+    controller.updateContainerRegistration({
+      id: "list",
+      getDropIndex: () => 1,
+    });
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: null,
+      overContainerId: "list",
+      edge: "bottom",
+      clientX: 0,
+      clientY: 0,
+    });
+    expect(controller.readSnapshot().previewIndex).toBe(1);
+  });
+
   it("cancels a drop that never hovered a target", () => {
     const onMove = vi.fn();
     const onCancel = vi.fn();

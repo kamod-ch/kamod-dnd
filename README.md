@@ -60,10 +60,13 @@ pnpm docs:build
 
 ## API (MVP)
 
-- `DndProvider` — `onMove`, optional `dropRule`, `locale`, `getItemLabel`, `getContainerLabel`, `focusFallbackRef`, `scrollRef`, `reducedMotion`
+- `DndProvider` — `onMove`, optional `onBatchMove`, `dropRule`, `batchDropRule`, `pointerActivation`, `locale`, `getItemLabel`, `getContainerLabel`, `focusFallbackRef`, `scrollRef`, `reducedMotion`
 - `useDndState`, `useDraggable`, `useDroppable`
-- `useSortable`, `useSortableContainer`, `applyMoveIntentToIds` from `@kamod-ch/dnd/sortable`
-- **`@kamod-ch/dnd/tree`** (opt-in, experimental) — helpers for container-per-parent hierarchies (`treeToContainers`, `applyTreeMove`, keyboard indent/outdent projection). Same `MoveIntent` contract; pair with separate row vs child-list refs (see `examples/tree`).
+- `useSortable`, `useSortableContainer`, `applyMoveIntentToIds` from `@kamod-ch/dnd/sortable` — optional `orientation`, `getDropIndex` for virtualized lists; `handleProps` and handle **Space/Enter** + **arrow** keyboard session
+- **`BatchMoveIntent`** — optional `onBatchMove` / `batchDropRule`; helpers in main export (`commitBatchMove`, …)
+- **`pointerActivation`** — `{ distance?, delay? }` on `DndProvider`
+- **`DragGhostPortal`** — optional headless drag preview
+- **`@kamod-ch/dnd/tree`** (opt-in, experimental until [manual a11y](docs/a11y-manual-checklist.md) — see [tree-ga.md](docs/tree-ga.md)) — helpers for container-per-parent hierarchies (`treeToContainers`, `applyTreeMove`, keyboard indent/outdent projection). Same `MoveIntent` contract; pair with separate row vs child-list refs (see `examples/tree`).
 - Target index is **after removing** the item from the source container.
 
 ## Examples
@@ -93,9 +96,9 @@ Safe to import the package without DOM; mount `DndProvider` only on the client.
 
 ## Scope
 
-**In scope:** vertical lists, transfers (including empty targets), handle-only pointer drag, escape cancel, keyboard moves, localized announcements.
+**In scope:** vertical and horizontal sortables, transfers (including empty targets), handle-only pointer drag, escape cancel, handle keyboard session, localized announcements, virtualization seams (`getDropIndex`, detach active row on unmount while id stays in order).
 
-**Not in MVP:** grids, virtualization, file/cross-window DnD.
+**Not in MVP:** grids, built-in virtualizer, file/cross-window DnD. Pointer autoscroll across a virtual window may still require keeping the source node mounted (see `docs/virtualization-evaluation.md`).
 
 **Trees (opt-in, experimental):** import `@kamod-ch/dnd/tree` and model each parent’s children as a container id. `examples/tree` is the browser reference, including a 900ms collapsed-parent hover recipe owned by the example. Flattened and virtualized trees are unsupported. Touch and screen-reader certification are still manual ([`docs/a11y-manual-checklist.md`](docs/a11y-manual-checklist.md), [`docs/tree-evaluation.md`](docs/tree-evaluation.md)).
 
@@ -106,7 +109,7 @@ Manual verification for touch devices and screen readers: [`docs/a11y-manual-che
 The application owns list state. During an active drag the library only checks that its session still matches that state:
 
 - A data-only refresh keeps the drag and the eventual move uses the latest payload.
-- Removing the active item cancels with `source-removed`.
+- Removing the active item from all container orders cancels with `source-removed`. Unmounting its row during a drag detaches DOM registration while the id remains in order (virtualized lists).
 - Changing the active item's container, or the order of its source or current preview container, cancels with `external-data-change`.
 - Disabling the active item cancels with `disabled`.
 - Dropping an item on its current same-container index completes without calling `dropRule` or `onMove`.

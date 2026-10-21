@@ -10,7 +10,13 @@ import {
 import type { Virtualizer } from "@tanstack/virtual-core";
 import { render } from "preact";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
-import { offsetForIndex, rowHeight, unmountedDropGap, VIEWPORT_PX } from "./geometry.js";
+import {
+  indexAtOffset,
+  offsetForIndex,
+  rowHeight,
+  unmountedDropGap,
+  VIEWPORT_PX,
+} from "./geometry.js";
 import { useElementVirtualizer } from "./use-virtualizer.js";
 
 type Row = { id: string; label: string };
@@ -242,7 +248,27 @@ function VirtualRows({
   showKeyboard?: boolean;
   onWindow?: (mounted: number, gap: string) => void;
 }) {
-  const { ref } = useSortableContainer({ id: containerId, itemIds: ids });
+  const getDropIndex = useMemo(() => {
+    return (args: {
+      containerId: string;
+      clientX: number;
+      clientY: number;
+      itemIds: readonly string[];
+      activeId: string;
+    }) => {
+      const scrollEl = scrollRef.current;
+      if (!scrollEl) return args.itemIds.length;
+      const rect = scrollEl.getBoundingClientRect();
+      const offset = args.clientY - rect.top + scrollEl.scrollTop;
+      return indexAtOffset(args.itemIds.length, offset);
+    };
+  }, [scrollRef]);
+
+  const { ref } = useSortableContainer({
+    id: containerId,
+    itemIds: ids,
+    getDropIndex: containerId === "main" ? getDropIndex : undefined,
+  });
   const virtualizer = useElementVirtualizer({
     count: ids.length,
     getScrollElement: () => scrollRef.current,

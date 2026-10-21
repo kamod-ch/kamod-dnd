@@ -50,7 +50,7 @@ test.describe("tree example", () => {
     await page.mouse.move(tbox!.x + tbox!.width / 2, tbox!.y + tbox!.height + 4, {
       steps: 25,
     });
-    await page.waitForTimeout(50);
+    await expect(page.getByRole("status")).toContainText("c1", { timeout: 10_000 });
     await page.mouse.up();
     await expect(page.getByRole("status")).toContainText("Child 2");
     await expect(page.getByTestId("node-c2")).toHaveAttribute("data-parent", "c1");

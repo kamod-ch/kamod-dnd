@@ -32,10 +32,35 @@ export type DndSessionEvent<TData = unknown> =
       readonly intent: MoveIntent<TData>;
     }
   | {
+      readonly type: "dropBatch";
+      readonly intent: BatchMoveIntent<TData>;
+    }
+  | {
       readonly type: "cancel";
       readonly itemId: DndId;
       readonly reason: CancelReason;
     };
+
+export type BatchMember<TData = unknown> = {
+  id: DndId;
+  containerId: DndId;
+  data: TData;
+};
+
+export type BatchMoveIntent<TData = unknown> = {
+  readonly kind: "batch";
+  readonly itemIds: readonly DndId[];
+  readonly targetContainerId: DndId;
+  readonly targetIndex: number;
+  readonly members: readonly BatchMember<TData>[];
+};
+
+export type BatchDropRuleContext<TData = unknown> = BatchMember<TData> & {
+  targetContainerId: DndId;
+  targetIndex: number;
+};
+
+export type BatchDropRule<TData = unknown> = (ctx: BatchDropRuleContext<TData>) => boolean;
 
 export type MoveIntent<TData = unknown> = {
   readonly kind: "move";
@@ -75,9 +100,25 @@ export type DndItemRegistration<TData = unknown> = {
   disabled?: boolean;
 };
 
+export type SortableOrientation = "vertical" | "horizontal";
+
+export type ContainerDropIndexArgs = {
+  containerId: DndId;
+  clientX: number;
+  clientY: number;
+  itemIds: readonly DndId[];
+  activeId: DndId;
+};
+
+export type GetContainerDropIndex = (args: ContainerDropIndexArgs) => number;
+
 export type DndContainerRegistration = {
   id: DndId;
   disabled?: boolean;
+  orientation?: SortableOrientation;
+  getDropIndex?: GetContainerDropIndex;
+  /** Resolved from the container element when a drop target is registered. */
+  direction?: "ltr" | "rtl";
 };
 
 export function isSamePositionIntent(intent: MoveIntent, sourceIndex: number): boolean {
