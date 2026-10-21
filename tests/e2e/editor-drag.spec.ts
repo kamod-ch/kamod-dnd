@@ -1,4 +1,21 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
+
+async function startPointerDrag(page: Page, handle: Locator, item: Locator) {
+  const box = await handle.boundingBox();
+  expect(box).toBeTruthy();
+  const x = box!.x + box!.width / 2;
+  const y = box!.y + box!.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + Math.min(8, box!.width / 4), y, { steps: 2 });
+  await expect(item).toHaveCSS("opacity", "0.5");
+}
+
+async function movePointer(page: Page, x: number, y: number, steps: number) {
+  await page.mouse.move(x, y, { steps });
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+  await page.mouse.move(x + 1, y);
+}
 
 test.describe("editor blocks drag", () => {
   test.beforeEach(async ({ page }) => {
@@ -16,16 +33,11 @@ test.describe("editor blocks drag", () => {
       .evaluateAll((els) => els.map((el) => el.getAttribute("data-testid")));
 
     const handle = page.getByTestId("handle-b1");
-    const box = await handle.boundingBox();
-    expect(box).toBeTruthy();
-    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-    await page.mouse.down();
-    await page.waitForTimeout(50);
+    await startPointerDrag(page, handle, page.getByTestId("block-b1"));
     const target = page.getByTestId("handle-b3");
     const tbox = await target.boundingBox();
     expect(tbox).toBeTruthy();
-    await page.mouse.move(tbox!.x + tbox!.width / 2, tbox!.y + tbox!.height + 4, { steps: 20 });
-    await page.waitForTimeout(50);
+    await movePointer(page, tbox!.x + tbox!.width / 2, tbox!.y + tbox!.height + 4, 20);
     await page.mouse.up();
 
     await expect
@@ -45,21 +57,16 @@ test.describe("editor blocks drag", () => {
     const initial = await orderOf();
 
     const handle = page.getByTestId("handle-b1");
-    const box = await handle.boundingBox();
-    expect(box).toBeTruthy();
-    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-    await page.mouse.down();
-    await page.waitForTimeout(50);
+    await startPointerDrag(page, handle, page.getByTestId("block-b1"));
 
     const target = page.getByTestId("handle-b3");
     const targetBox = await target.boundingBox();
     expect(targetBox).toBeTruthy();
-    await page.mouse.move(
+    await movePointer(
+      page,
       targetBox!.x + targetBox!.width / 2,
       targetBox!.y + targetBox!.height + 4,
-      {
-        steps: 20,
-      },
+      20,
     );
     await expect(page.getByTestId("block-b1")).toHaveCSS("opacity", "0.5");
 
@@ -70,7 +77,7 @@ test.describe("editor blocks drag", () => {
     expect(titleBox!.y + titleBox!.height).toBeLessThan(listBox!.y);
     const outside = { x: 8, y: titleBox!.y + titleBox!.height / 2 };
     expect(outside.x).toBeLessThan(listBox!.x);
-    await page.mouse.move(outside.x, outside.y, { steps: 25 });
+    await movePointer(page, outside.x, outside.y, 25);
     const overList = await page.evaluate(({ x, y }) => {
       const el = document.elementFromPoint(x, y);
       const list = document.querySelector("[data-testid='editor-list']");

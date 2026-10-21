@@ -3,7 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 const treeBase = "http://localhost:14277";
 const ROOT_SENTINEL = "__tree_root__";
 
-async function startPointerDrag(page: Page, handle: Locator) {
+async function startPointerDrag(page: Page, handle: Locator, item: Locator) {
   const box = await handle.boundingBox();
   expect(box).toBeTruthy();
   const x = box!.x + box!.width / 2;
@@ -11,9 +11,10 @@ async function startPointerDrag(page: Page, handle: Locator) {
   await page.mouse.move(x, y);
   await page.mouse.down();
   // Cross the browser's native drag threshold while still over the handle,
-  // then wait until Pragmatic DnD has observed dragstart.
+  // then wait for observable drag state. The live-region "Picked up" message
+  // can be replaced immediately by the first "Moved" announcement.
   await page.mouse.move(x + Math.min(8, box!.width / 4), y, { steps: 2 });
-  await expect(page.getByRole("status")).toContainText("Picked up");
+  await expect(item).toHaveCSS("opacity", "0.5");
 }
 
 async function movePointer(page: Page, x: number, y: number, steps: number) {
@@ -63,7 +64,7 @@ test.describe("tree example", () => {
     const targetHandle = page.getByTestId("handle-g1");
     const tbox = await targetHandle.boundingBox();
     expect(tbox).toBeTruthy();
-    await startPointerDrag(page, handle);
+    await startPointerDrag(page, handle, page.getByTestId("node-c2"));
     await movePointer(page, tbox!.x + tbox!.width / 2, tbox!.y + tbox!.height + 4, 25);
     await expect(page.getByRole("status")).toContainText("c1", { timeout: 10_000 });
     await page.mouse.up();
@@ -91,7 +92,7 @@ test.describe("tree example", () => {
     const target = page.getByTestId("handle-c1");
     const rbox = await target.boundingBox();
     expect(rbox).toBeTruthy();
-    await startPointerDrag(page, handle);
+    await startPointerDrag(page, handle, page.getByTestId("node-c2"));
     await movePointer(page, rbox!.x + rbox!.width / 2, rbox!.y + rbox!.height / 2, 15);
     await expect(page.getByTestId("node-c1")).toHaveAttribute("aria-expanded", "true", {
       timeout: 3_000,
@@ -108,7 +109,7 @@ test.describe("tree example", () => {
     const rbox = await row.boundingBox();
     const abox = await away.boundingBox();
     expect(rbox && abox).toBeTruthy();
-    await startPointerDrag(page, handle);
+    await startPointerDrag(page, handle, page.getByTestId("node-c2"));
     await movePointer(page, rbox!.x + rbox!.width / 2, rbox!.y + rbox!.height / 2, 15);
     await movePointer(page, abox!.x + abox!.width / 2, abox!.y + abox!.height / 2, 15);
     await page.waitForTimeout(1_100);
@@ -121,7 +122,7 @@ test.describe("tree example", () => {
     const target = page.getByTestId("handle-g1");
     const tbox = await target.boundingBox();
     expect(tbox).toBeTruthy();
-    await startPointerDrag(page, handle);
+    await startPointerDrag(page, handle, page.getByTestId("node-c2"));
     await movePointer(page, tbox!.x + tbox!.width / 2, tbox!.y + tbox!.height + 4, 20);
     await expect(page.getByTestId("engine-over-container-main")).toContainText("c1");
     await page.evaluate(() => {
