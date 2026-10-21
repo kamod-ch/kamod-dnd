@@ -19,8 +19,12 @@ export function NextStepGrid({ items, class: className = "" }: NextStepGridProps
       {items.map((item) => {
         const body = (
           <>
-            <h3 class="m-0 text-base font-semibold text-foreground group-hover:text-brand">{item.title}</h3>
-            <p class="m-0 mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+            <h3 class="m-0 text-base font-semibold text-foreground group-hover:text-brand">
+              {item.title}
+            </h3>
+            <p class="m-0 mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+              {item.description}
+            </p>
             {item.paths && item.paths.length > 0 ? (
               <div class="mt-3 flex flex-wrap gap-1.5">
                 {item.paths.map((path) => (

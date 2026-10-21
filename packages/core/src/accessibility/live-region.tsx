@@ -23,12 +23,7 @@ const visuallyHiddenStyle = {
 /** Visually hidden live region for screen reader announcements. */
 export function DndLiveRegion({ message, politeness = "polite" }: LiveRegionProps) {
   return (
-    <div
-      role="status"
-      aria-live={politeness}
-      aria-atomic="true"
-      style={visuallyHiddenStyle}
-    >
+    <div role="status" aria-live={politeness} aria-atomic="true" style={visuallyHiddenStyle}>
       {message as ComponentChildren}
     </div>
   );

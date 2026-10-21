@@ -78,10 +78,7 @@ export function SortableListDemo(): JSX.Element {
 
   return (
     <div class="kp-theme w-full max-w-md">
-      <DndProvider<TaskData>
-        onMove={onMove}
-        getItemLabel={(_, data) => data.label}
-      >
+      <DndProvider<TaskData> onMove={onMove} getItemLabel={(_, data) => data.label}>
         <SortableListBody order={order} />
       </DndProvider>
     </div>
