@@ -1,7 +1,13 @@
 import { FaviconSync } from "@kamod-ch/brand";
-import type { LayoutProps } from "@kamod-ch/preactpress/client";
+import { withBase, type LayoutProps } from "@kamod-ch/preactpress/client";
 import { syncThemeFromStorage } from "@kamod-ch/themes";
-import type { ComponentChildren, FunctionalComponent, HeadingHTMLAttributes, JSX } from "preact";
+import type {
+  ComponentChildren,
+  ComponentProps,
+  FunctionalComponent,
+  HeadingHTMLAttributes,
+  JSX,
+} from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { BrandLogo } from "../../components/shared/BrandLogo";
 import { DocsThemeProvider, ThemeToggle } from "../../components/shared/ThemeToggle";
@@ -16,13 +22,6 @@ type SidebarGroup = { text: string; items: NavItem[] };
 
 function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
-}
-
-function withBase(base: string, link: string): string {
-  if (/^https?:\/\//.test(link)) return link;
-  const b = base === "/" ? "" : base.replace(/\/$/, "");
-  const l = link.startsWith("/") ? link : `/${link}`;
-  return `${b}${l}`;
 }
 
 function normalizeLink(link: string): string {
@@ -61,15 +60,15 @@ function slugify(text: string): string {
   return slug || "section";
 }
 
-function createMdxHeadingComponents() {
+function createMdxHeadingComponents(siteBase: string) {
   const used = new Map<string, number>();
   const heading =
     (Tag: "h2" | "h3") =>
     ({ children, ...props }: HeadingHTMLAttributes<HTMLHeadingElement>) => {
-      const base = slugify(childText(children));
-      const count = used.get(base) ?? 0;
-      used.set(base, count + 1);
-      const id = count === 0 ? base : `${base}-${count + 1}`;
+      const headingBase = slugify(childText(children));
+      const count = used.get(headingBase) ?? 0;
+      used.set(headingBase, count + 1);
+      const id = count === 0 ? headingBase : `${headingBase}-${count + 1}`;
       return (
         <Tag
           {...props}
@@ -82,6 +81,13 @@ function createMdxHeadingComponents() {
     };
 
   return {
+    a: ({ href, ...props }: ComponentProps<"a">) => {
+      const anchorProps = {
+        ...props,
+        href: typeof href === "string" ? withBase(siteBase, href) : href,
+      } as ComponentProps<"a">;
+      return <a {...anchorProps} />;
+    },
     h2: heading("h2"),
     h3: heading("h3"),
   };
@@ -155,7 +161,7 @@ const Layout: FunctionalComponent<LayoutProps> = ({ site, themeConfig, routePath
   }, [query, sidebar]);
 
   const MdxComponent = page?.kind === "mdx" ? page.Component : undefined;
-  const mdxComponents = createMdxHeadingComponents();
+  const mdxComponents = createMdxHeadingComponents(site.base);
 
   useEffect(() => {
     setQuery("");

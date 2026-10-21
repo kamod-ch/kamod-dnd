@@ -1,3 +1,4 @@
+import { withBase } from "@kamod-ch/preactpress/client";
 import type { JSX } from "preact";
 
 export type NextStepItem = {
@@ -7,6 +8,10 @@ export type NextStepItem = {
   external?: boolean;
   paths?: string[];
 };
+
+function docsHref(href: string): string {
+  return withBase(import.meta.env.BASE_URL || "/", href);
+}
 
 type NextStepGridProps = {
   items: NextStepItem[];
@@ -63,7 +68,7 @@ export function NextStepGrid({ items, class: className = "" }: NextStepGridProps
         return (
           <a
             key={item.title}
-            href={item.href}
+            href={docsHref(item.href)}
             class="group flex h-full flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-brand/40 hover:bg-muted/20"
             {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
           >
