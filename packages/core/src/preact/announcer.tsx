@@ -1,3 +1,4 @@
+import { createPortal } from "preact/compat";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { RefObject } from "preact";
 import type { DndController } from "../session/controller.js";
@@ -85,5 +86,7 @@ export function DndAnnouncer<TData>({
     });
   }, [controller, localeRef]);
 
-  return <DndLiveRegion message={liveMessage} />;
+  const region = <DndLiveRegion message={liveMessage} />;
+  if (typeof document === "undefined") return region;
+  return createPortal(region, document.body);
 }

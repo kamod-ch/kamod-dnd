@@ -5,6 +5,8 @@ description: Headless Preact drag-and-drop for sortable lists and cross-containe
 
 import { CopyButton } from "./components/shared/CopyButton";
 import { ExampleFrame } from "./components/shared/ExampleFrame";
+import { FeatureGrid } from "./components/shared/FeatureGrid";
+import { NextStepGrid } from "./components/shared/NextStepGrid";
 import { SortableListDemo, sortableListDemoCode } from "./components/demos/SortableListDemo";
 
 **@kamod-ch/dnd** is a headless Preact library for sortable lists and Kanban-style transfers. It builds on [Pragmatic Drag and Drop](https://atlassian.design/components/pragmatic-drag-and-drop/) and keeps your domain data in your app — the library owns the ephemeral drag session and emits `MoveIntent` on drop (and via keyboard helpers).
@@ -30,15 +32,63 @@ Peer dependencies: `preact`, `@preact/signals`.
 
 ## What you get
 
-- **`DndProvider`** — instance-scoped controller, `onMove`, optional `dropRule`, `locale`, label resolvers, `scrollRef`
-- **`useSortable` / `useSortableContainer`** — vertical lists and cross-container transfer
-- **`useDraggable` / `useDroppable`** — lower-level registration when you need custom layouts
-- **Keyboard moves** — Space/Enter and arrows on the sortable handle; `moveByKeyboard` for cross-container steps; escape cancels active drags
-- **Labels and focus** — optional `getItemLabel` / `getContainerLabel` (ids are the fallback). After an accepted move or cancel, focus returns to that item's handle on the second animation frame. Hover and rejected keyboard moves leave focus alone. Screen-reader and touch certification stays on the manual checklist; `@kamod-ch/dnd/tree` stays experimental until that passes.
-- **SSR-safe import** — mount `DndProvider` on the client only
+<FeatureGrid
+  items={[
+    {
+      code: "DndProvider",
+      description:
+        "Instance-scoped controller with onMove, optional dropRule, locale, label resolvers, and scrollRef.",
+      tags: ["core"],
+    },
+    {
+      code: "useSortable / useSortableContainer",
+      description: "Vertical lists and cross-container transfer with shared session state.",
+      tags: ["sortable"],
+    },
+    {
+      code: "useDraggable / useDroppable",
+      description: "Lower-level registration when you need custom layouts outside the sortable helpers.",
+    },
+    {
+      code: "Keyboard moves",
+      description:
+        "Space/Enter and arrows on the sortable handle; moveByKeyboard for cross-container steps; Escape cancels active drags.",
+      tags: ["a11y"],
+    },
+    {
+      code: "Labels & focus",
+      wide: true,
+      description:
+        "Optional getItemLabel / getContainerLabel (ids are the fallback). After an accepted move or cancel, focus returns to that item's handle on the second animation frame. Hover and rejected keyboard moves leave focus alone. Screen-reader and touch certification stays on the manual checklist; @kamod-ch/dnd/tree stays experimental until that passes.",
+      tags: ["a11y"],
+    },
+    {
+      code: "SSR-safe import",
+      description: "Mount DndProvider on the client only — no drag engine on the server.",
+    },
+  ]}
+/>
 
 ## Next steps
 
-- [Live examples](/examples/) — Kanban, editor blocks, and the minimal list pattern
-- [Hierarchical trees](/guides/tree/) — opt-in `@kamod-ch/dnd/tree` and container-per-parent pattern
-- Full Vite demos in the repo: `examples/kanban`, `examples/editor-blocks`, spike `spikes/tree-spike`
+<NextStepGrid
+  items={[
+    {
+      href: "/examples/",
+      title: "Live examples",
+      description: "Kanban, editor blocks, horizontal strips, and the minimal list pattern — all wired to the workspace package.",
+    },
+    {
+      href: "/guides/tree/",
+      title: "Hierarchical trees",
+      description: "Opt-in @kamod-ch/dnd/tree and the container-per-parent pattern for nested sortables.",
+    },
+    {
+      href: "https://github.com/kamod-ch/kamod-dnd",
+      title: "Vite demos in the repo",
+      description: "Clone and run full apps locally when you need more than the docs embeds.",
+      external: true,
+      paths: ["examples/kanban", "examples/editor-blocks", "spikes/tree-spike"],
+    },
+  ]}
+/>

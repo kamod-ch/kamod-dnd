@@ -3,6 +3,8 @@ import { applyMoveIntentToIds, useSortable, useSortableContainer } from "@kamod-
 import type { JSX } from "preact";
 import { useState } from "preact/hooks";
 
+type TaskData = { id: string; label: string };
+
 const labels: Record<string, string> = {
   a: "Alpha task",
   b: "Beta task",
@@ -22,40 +24,46 @@ export function SortableList() {
   };
 
   return (
-    <DndProvider onMove={onMove}>
+    <DndProvider
+      onMove={onMove}
+      getItemLabel={(_, data) => data.label}
+    >
       <SortableListBody order={order} />
     </DndProvider>
   );
 }
 
 function SortableListBody({ order }: { order: string[] }) {
-  const { ref } = useSortableContainer({ id: "list", itemIds: order });
+  const { ref, previewIndex } = useSortableContainer({ id: "list", itemIds: order });
   return (
-    <ul ref={ref} class="list-none space-y-2 p-0">
-      {order.map((id) => (
-        <SortableRow key={id} id={id} />
+    <ul ref={ref} class="flex list-none flex-col gap-2 p-0">
+      {order.map((id, index) => (
+        <SortableRow key={id} id={id} showMarker={previewIndex === index} />
       ))}
     </ul>
   );
 }
 
-function SortableRow({ id }: { id: string }) {
+function SortableRow({ id, showMarker }: { id: string; showMarker?: boolean }) {
   const { itemRef, handleRef, isDragging } = useSortable({
     id,
     containerId: "list",
-    data: { id },
+    data: { id, label: id },
   });
 
   return (
-    <li
-      ref={itemRef}
-      class="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2"
-      style={{ opacity: isDragging ? 0.55 : 1 }}
-    >
-      <button ref={handleRef} type="button" aria-label={\`Drag \${id}\`} style={{ cursor: "grab" }}>
-        ⠿
-      </button>
-      <span>{id}</span>
+    <li class="list-none">
+      {showMarker ? <div class="h-0.5 shrink-0 rounded bg-brand" aria-hidden="true" /> : null}
+      <div
+        ref={itemRef}
+        class="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2"
+        style={{ opacity: isDragging ? 0.55 : 1 }}
+      >
+        <button ref={handleRef} type="button" aria-label={\`Drag \${id}\`} style={{ cursor: "grab" }}>
+          ⠿
+        </button>
+        <span>{id}</span>
+      </div>
     </li>
   );
 }`;
@@ -63,14 +71,17 @@ function SortableRow({ id }: { id: string }) {
 export function SortableListDemo(): JSX.Element {
   const [order, setOrder] = useState(["a", "b", "c"]);
 
-  const onMove = (intent: MoveIntent) => {
+  const onMove = (intent: MoveIntent<TaskData>) => {
     setOrder((prev) => applyMoveIntentToIds({ list: prev }, intent).list);
     return true;
   };
 
   return (
     <div class="kp-theme w-full max-w-md">
-      <DndProvider onMove={onMove}>
+      <DndProvider<TaskData>
+        onMove={onMove}
+        getItemLabel={(_, data) => data.label}
+      >
         <SortableListBody order={order} />
       </DndProvider>
     </div>
@@ -78,17 +89,30 @@ export function SortableListDemo(): JSX.Element {
 }
 
 function SortableListBody({ order }: { order: string[] }) {
-  const { ref } = useSortableContainer({ id: "list", itemIds: order });
+  const { ref, previewIndex } = useSortableContainer({ id: "list", itemIds: order });
   return (
-    <div ref={ref} class="space-y-2">
-      {order.map((id) => (
-        <SortableRow key={id} id={id} label={labels[id] ?? id} />
+    <div ref={ref} class="flex flex-col gap-2">
+      {order.map((id, index) => (
+        <SortableRow
+          key={id}
+          id={id}
+          label={labels[id] ?? id}
+          showMarker={previewIndex === index}
+        />
       ))}
     </div>
   );
 }
 
-function SortableRow({ id, label }: { id: string; label: string }) {
+function SortableRow({
+  id,
+  label,
+  showMarker,
+}: {
+  id: string;
+  label: string;
+  showMarker?: boolean;
+}) {
   const { itemRef, handleProps, isDragging } = useSortable({
     id,
     containerId: "list",
@@ -96,15 +120,18 @@ function SortableRow({ id, label }: { id: string; label: string }) {
   });
 
   return (
-    <div
-      ref={itemRef}
-      class="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 shadow-sm"
-      style={{ opacity: isDragging ? 0.55 : 1 }}
-    >
-      <button {...handleProps} aria-label={`Drag ${label}`} class="text-muted-foreground">
-        ⠿
-      </button>
-      <span class="text-sm font-medium text-foreground">{label}</span>
-    </div>
+    <>
+      {showMarker ? <div class="h-0.5 shrink-0 rounded bg-brand" aria-hidden="true" /> : null}
+      <div
+        ref={itemRef}
+        class="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 shadow-sm"
+        style={{ opacity: isDragging ? 0.55 : 1 }}
+      >
+        <button {...handleProps} aria-label={`Drag ${label}`} class="text-muted-foreground">
+          ⠿
+        </button>
+        <span class="text-sm font-medium text-foreground">{label}</span>
+      </div>
+    </>
   );
 }
