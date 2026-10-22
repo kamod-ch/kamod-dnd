@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 – 2026-10-21
+
+- Erste Veröffentlichung von `@kamod-ch/dnd` auf npm mit dem Funktionsumfang von 0.4.0.
+
 ## 0.4.0 – 2026-10-21
 
 Roadmap after 0.3 (line 68).
