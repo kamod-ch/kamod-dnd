@@ -90,13 +90,13 @@ body {
   max-width: var(--docs-content-max);
 }
 
-.docs-prose :is(h2, h3) {
+.docs-prose :where(h2, h3) {
   scroll-margin-top: calc(var(--docs-header-height) + 1rem);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
-.docs-prose h2 {
+.docs-prose :where(h2) {
   margin-top: 2.5rem;
   margin-bottom: 0.75rem;
   font-size: 1.35rem;
@@ -104,28 +104,26 @@ body {
   color: var(--foreground);
 }
 
-.docs-prose h3 {
+.docs-prose :where(h3) {
   margin-top: 1.75rem;
   margin-bottom: 0.5rem;
   font-size: 1.05rem;
   color: var(--foreground);
 }
 
-.docs-prose p,
-.docs-prose ul,
-.docs-prose ol {
+.docs-prose :where(p, ul, ol) {
   margin: 0.85rem 0;
   color: var(--muted-foreground);
   line-height: 1.65;
 }
 
-.docs-prose a {
+.docs-prose :where(a) {
   color: var(--brand-hover);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-.docs-prose :not(pre) > code {
+.docs-prose :where(:not(pre) > code) {
   border-radius: 0.35rem;
   background: var(--muted);
   padding: 0.1rem 0.35rem;
@@ -133,7 +131,7 @@ body {
   color: var(--foreground);
 }
 
-.docs-prose pre {
+.docs-prose :where(pre) {
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius, 0.5rem);
@@ -143,12 +141,10 @@ body {
   line-height: 1.5;
 }
 
-.docs-demo-frame {
-  position: relative;
-  overflow: visible;
-  min-height: 12rem;
-  display: block;
-  width: 100%;
+.docs-demo-canvas {
+  background-color: color-mix(in srgb, var(--muted) 42%, transparent);
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 14px 14px;
 }
 
 .hit-target {

@@ -23,11 +23,14 @@ Peer dependencies: `preact`, `@preact/signals`.
 ## Quick preview
 
 <ExampleFrame
+  id="quick-preview"
   title="Sortable list"
-  description="Handle-only pointer drag with applyMoveIntentToIds updating local order."
+  description="Handle-only pointer drag. applyMoveIntentToIds writes the next local order."
+  hint="Space or Enter picks up and drops. Arrow keys move. Escape cancels."
   preview={<SortableListDemo />}
   code={sortableListDemoCode}
   badges={["DndProvider", "useSortable", "sortable"]}
+  class="not-prose my-8"
 />
 
 ## What you get

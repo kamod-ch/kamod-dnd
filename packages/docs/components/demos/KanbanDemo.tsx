@@ -1,67 +1,74 @@
-import { DndProvider, type DropRuleContext, type MoveIntent } from "@kamod-ch/dnd";
+import { DndProvider, useDndState, type DropRuleContext, type MoveIntent } from "@kamod-ch/dnd";
 import { applyMoveIntentToIds, useSortable, useSortableContainer } from "@kamod-ch/dnd/sortable";
 import type { JSX } from "preact";
-import { useMemo, useRef, useState } from "preact/hooks";
-import { DemoButton } from "../shared/DemoButton";
+import { Fragment } from "preact";
+import { useEffect, useMemo, useState } from "preact/hooks";
+import { DragHandle, dragItemClass } from "../shared/DragHandle";
+import { IDLE_NOTICE, useDemoReset, useExampleFrame } from "../shared/ExampleFrame";
+import { InsertionMarker } from "../shared/InsertionMarker";
+import { MoveMenu } from "../shared/MoveMenu";
+import { formatMove } from "../shared/format-move";
 
 type Card = { id: string; title: string; detail: string };
 
 const columns = ["todo", "doing", "done"] as const;
+type ColumnId = (typeof columns)[number];
 
-const initial: Record<string, Card[]> = {
-  todo: [
-    { id: "c1", title: "Write spec", detail: "Short card" },
-    { id: "c2", title: "Design API", detail: "Taller description with two lines." },
-    { id: "c4", title: "blocked release", detail: "Drop rule test card" },
-  ],
-  doing: [{ id: "c3", title: "Build spike", detail: "In progress" }],
-  done: [],
+const columnLabels: Record<ColumnId, string> = {
+  todo: "To do",
+  doing: "Doing",
+  done: "Done",
 };
 
-export const kanbanDemoCode = `const dropRule = (ctx: DropRuleContext<Card>) => {
-  if (ctx.targetContainerId === "done" && ctx.data.title.includes("blocked")) {
-    return false;
-  }
-  return true;
-};
+const REJECTED = "rejected: blocked items cannot enter Done";
 
-const onMove = (intent: MoveIntent<Card>) => {
-  setLists(/* remap cards from applyMoveIntentToIds(orders, intent) */);
-  return true;
-};
+function createLists(): Record<ColumnId, Card[]> {
+  return {
+    todo: [
+      { id: "c1", title: "Write spec", detail: "Short card" },
+      { id: "c2", title: "Design API", detail: "Taller description with two lines." },
+      { id: "c4", title: "blocked release", detail: "Drop rule test card" },
+    ],
+    doing: [{ id: "c3", title: "Build spike", detail: "In progress" }],
+    done: [],
+  };
+}
 
-<DndProvider<Card> onMove={onMove} dropRule={dropRule} scrollRef={scrollRef}>
-  {columns.map((col) => (
-    <KanbanColumn key={col} id={col} cards={lists[col]} itemIds={orders[col]} />
-  ))}
-</DndProvider>`;
+export const kanbanDemoCode = `import { DndProvider, type DropRuleContext, type MoveIntent } from "@kamod-ch/dnd";
+import { applyMoveIntentToIds, useSortable, useSortableContainer } from "@kamod-ch/dnd/sortable";
+import { useMemo, useState } from "preact/hooks";
 
-export function KanbanDemo(): JSX.Element {
-  const [lists, setLists] = useState(initial);
-  const scrollRef = useRef<HTMLDivElement>(null);
+type Card = { id: string; title: string; detail: string };
+const columns = ["todo", "doing", "done"] as const;
+
+export function Kanban() {
+  const [lists, setLists] = useState({
+    todo: [
+      { id: "c1", title: "Write spec", detail: "Short card" },
+      { id: "c4", title: "blocked release", detail: "Drop rule test card" },
+    ],
+    doing: [{ id: "c3", title: "Build spike", detail: "In progress" }],
+    done: [] as Card[],
+  });
 
   const orders = useMemo(
     () => ({
-      todo: lists.todo.map((c) => c.id),
-      doing: lists.doing.map((c) => c.id),
-      done: lists.done.map((c) => c.id),
+      todo: lists.todo.map((card) => card.id),
+      doing: lists.doing.map((card) => card.id),
+      done: lists.done.map((card) => card.id),
     }),
     [lists],
   );
 
-  const dropRule = (ctx: DropRuleContext<Card>) => {
-    if (ctx.targetContainerId === "done" && ctx.data.title.includes("blocked")) {
-      return false;
-    }
-    return true;
-  };
+  const dropRule = (ctx: DropRuleContext<Card>) =>
+    !(ctx.targetContainerId === "done" && ctx.data.title.includes("blocked"));
 
   const onMove = (intent: MoveIntent<Card>) => {
     const nextOrders = applyMoveIntentToIds(orders, intent);
     setLists((prev) => {
       const cards = new Map<string, Card>();
-      for (const col of columns) {
-        for (const c of prev[col]) cards.set(c.id, c);
+      for (const column of columns) {
+        for (const card of prev[column]) cards.set(card.id, card);
       }
       const remap = (ids: string[]) => ids.map((id) => cards.get(id)!);
       return {
@@ -74,41 +81,30 @@ export function KanbanDemo(): JSX.Element {
   };
 
   return (
-    <div class="kp-theme w-full">
-      <DndProvider<Card> onMove={onMove} dropRule={dropRule} scrollRef={scrollRef}>
-        <div ref={scrollRef} class="grid gap-3 sm:grid-cols-3" style={{ alignItems: "start" }}>
-          {columns.map((col) => (
-            <KanbanColumn key={col} id={col} cards={lists[col]} itemIds={orders[col]} />
-          ))}
-        </div>
-      </DndProvider>
-    </div>
+    <DndProvider onMove={onMove} dropRule={dropRule} getItemLabel={(_, card) => card.title}>
+      <div class="grid gap-3 sm:grid-cols-3">
+        {columns.map((column) => (
+          <Column key={column} id={column} cards={lists[column]} itemIds={orders[column]} />
+        ))}
+      </div>
+    </DndProvider>
   );
 }
 
-function KanbanColumn({ id, cards, itemIds }: { id: string; cards: Card[]; itemIds: string[] }) {
+function Column({ id, cards, itemIds }: { id: string; cards: Card[]; itemIds: string[] }) {
   const { ref, previewIndex } = useSortableContainer({ id, itemIds });
   return (
-    <section ref={ref} class="min-h-[12rem] rounded-lg border border-border bg-muted/50 p-2">
-      <h2 class="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{id}</h2>
-      {cards.length === 0 ? <p class="text-xs text-muted-foreground">Drop cards here</p> : null}
+    <section ref={ref}>
       {cards.map((card, index) => (
         <KanbanCard key={card.id} card={card} columnId={id} showMarker={previewIndex === index} />
       ))}
+      {previewIndex === cards.length ? <div class="h-1 rounded-full bg-brand" /> : null}
     </section>
   );
 }
 
-function KanbanCard({
-  card,
-  columnId,
-  showMarker,
-}: {
-  card: Card;
-  columnId: string;
-  showMarker?: boolean;
-}) {
-  const { itemRef, handleRef, isDragging, moveByKeyboard } = useSortable({
+function KanbanCard({ card, columnId, showMarker }: { card: Card; columnId: string; showMarker?: boolean }) {
+  const { itemRef, handleProps, isDragging, moveByKeyboard } = useSortable({
     id: card.id,
     containerId: columnId,
     data: card,
@@ -116,43 +112,170 @@ function KanbanCard({
 
   return (
     <>
-      {showMarker ? <div class="mb-1 h-0.5 rounded bg-brand" /> : null}
-      <article
-        ref={itemRef}
-        class="mb-2 rounded-lg border border-border bg-card p-2.5 shadow-sm"
-        style={{ opacity: isDragging ? 0.6 : 1 }}
-      >
-        <div class="flex gap-2">
-          <button
-            ref={handleRef}
-            type="button"
-            aria-label={`Drag ${card.title}`}
-            class="text-muted-foreground"
-            style={{ touchAction: "none", cursor: "grab" }}
-          >
-            ⠿
-          </button>
-          <div class="min-w-0 flex-1">
-            <strong class="text-sm">{card.title}</strong>
-            <p class="mt-1 text-xs whitespace-pre-wrap text-muted-foreground">{card.detail}</p>
-          </div>
-        </div>
-        <div class="mt-2 flex flex-wrap gap-1">
-          <DemoButton onClick={() => moveByKeyboard({ type: "up" })}>Up</DemoButton>
-          <DemoButton onClick={() => moveByKeyboard({ type: "down" })}>Down</DemoButton>
-          {columns
-            .filter((c) => c !== columnId)
-            .map((target) => (
-              <DemoButton
-                key={target}
-                variant="outline"
-                onClick={() => moveByKeyboard({ type: "transfer", targetContainerId: target })}
-              >
-                → {target}
-              </DemoButton>
-            ))}
-        </div>
+      {showMarker ? <div class="h-1 rounded-full bg-brand" aria-hidden="true" /> : null}
+      <article ref={itemRef} data-dragging={isDragging ? "true" : "false"}>
+        <button {...handleProps} aria-label={\`Drag \${card.title}\`} class="min-h-11 min-w-11">⠿</button>
+        <strong>{card.title}</strong>
+        <button type="button" onClick={() => moveByKeyboard({ type: "up" })}>Up</button>
+        <button type="button" onClick={() => moveByKeyboard({ type: "down" })}>Down</button>
+        <button type="button" onClick={() => moveByKeyboard({ type: "transfer", targetContainerId: "done" })}>
+          To done
+        </button>
       </article>
     </>
+  );
+}`;
+
+export function KanbanDemo(): JSX.Element {
+  const [lists, setLists] = useState(createLists);
+  const { setNotice } = useExampleFrame();
+  useDemoReset(() => setLists(createLists()));
+
+  const orders = useMemo(
+    () => ({
+      todo: lists.todo.map((card) => card.id),
+      doing: lists.doing.map((card) => card.id),
+      done: lists.done.map((card) => card.id),
+    }),
+    [lists],
+  );
+
+  const dropRule = (ctx: DropRuleContext<Card>) =>
+    !(ctx.targetContainerId === "done" && ctx.data.title.includes("blocked"));
+
+  const onMove = (intent: MoveIntent<Card>) => {
+    const nextOrders = applyMoveIntentToIds(orders, intent);
+    setLists((prev) => {
+      const cards = new Map<string, Card>();
+      for (const column of columns) {
+        for (const card of prev[column]) cards.set(card.id, card);
+      }
+      const remap = (ids: string[]) => ids.map((id) => cards.get(id)!);
+      return {
+        todo: remap(nextOrders.todo),
+        doing: remap(nextOrders.doing),
+        done: remap(nextOrders.done),
+      };
+    });
+    setNotice({
+      tone: "move",
+      text: formatMove(intent.data.title, intent, (id) => columnLabels[id as ColumnId] ?? id),
+    });
+    return true;
+  };
+
+  return (
+    <div class="w-full">
+      <DndProvider<Card>
+        onMove={onMove}
+        dropRule={dropRule}
+        getItemLabel={(_, card) => card.title}
+        getContainerLabel={(id) => columnLabels[id as ColumnId] ?? id}
+        onCancel={(reason) => {
+          if (reason === "rejected") setNotice({ tone: "reject", text: REJECTED });
+        }}
+      >
+        <RejectWatch />
+        <div class="grid items-start gap-3 sm:grid-cols-3">
+          {columns.map((column) => (
+            <KanbanColumn key={column} id={column} cards={lists[column]} itemIds={orders[column]} />
+          ))}
+        </div>
+      </DndProvider>
+    </div>
+  );
+}
+
+function RejectWatch(): null {
+  const snap = useDndState<Card>();
+  const { notice, setNotice } = useExampleFrame();
+
+  useEffect(() => {
+    if (snap.phase !== "dragging") return;
+    const blocked = snap.overContainerId === "done" && !snap.canDrop;
+    if (blocked) {
+      if (notice.tone === "reject" && notice.text === REJECTED) return;
+      setNotice({ tone: "reject", text: REJECTED });
+      return;
+    }
+    if (notice.tone === "reject") setNotice(IDLE_NOTICE);
+  }, [notice, setNotice, snap.canDrop, snap.overContainerId, snap.phase]);
+
+  return null;
+}
+
+function KanbanColumn({ id, cards, itemIds }: { id: ColumnId; cards: Card[]; itemIds: string[] }) {
+  const { ref, previewIndex } = useSortableContainer({ id, itemIds });
+  const snap = useDndState<Card>();
+  const rejected = snap.phase === "dragging" && snap.overContainerId === id && !snap.canDrop;
+
+  return (
+    <section
+      ref={ref}
+      data-reject={rejected ? "true" : "false"}
+      class="min-h-48 rounded-lg border border-border bg-background/80 p-2 data-[reject=true]:border-brand data-[reject=true]:bg-muted"
+    >
+      <p class="m-0 mb-2 px-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        {columnLabels[id]}
+      </p>
+      {cards.length === 0 ? (
+        <p class="m-0 px-1 text-xs text-muted-foreground">Drop cards here</p>
+      ) : null}
+      {cards.map((card, index) => (
+        <Fragment key={card.id}>
+          {previewIndex === index ? <InsertionMarker /> : null}
+          <KanbanCard card={card} columnId={id} />
+        </Fragment>
+      ))}
+      {previewIndex === cards.length ? <InsertionMarker /> : null}
+    </section>
+  );
+}
+
+function KanbanCard({ card, columnId }: { card: Card; columnId: ColumnId }) {
+  const { setNotice } = useExampleFrame();
+  const { itemRef, handleProps, isDragging, moveByKeyboard } = useSortable({
+    id: card.id,
+    containerId: columnId,
+    data: card,
+  });
+
+  const transfer = (target: ColumnId) => {
+    if (target === "done" && card.title.includes("blocked")) {
+      setNotice({ tone: "reject", text: REJECTED });
+      return;
+    }
+    moveByKeyboard({ type: "transfer", targetContainerId: target });
+  };
+
+  return (
+    <article
+      ref={itemRef}
+      data-dragging={isDragging ? "true" : "false"}
+      class={`mb-2 rounded-lg border border-border bg-card p-2 ${dragItemClass}`}
+    >
+      <div class="flex items-start gap-1">
+        <DragHandle label={`Drag ${card.title}`} handleProps={handleProps} />
+        <div class="min-w-0 flex-1 py-2 pr-2">
+          <strong class="block text-sm text-foreground">{card.title}</strong>
+          <p class="m-0 mt-1 text-xs whitespace-pre-wrap text-muted-foreground">{card.detail}</p>
+          <div class="mt-2">
+            <MoveMenu
+              actions={[
+                { id: "up", label: "Up", onSelect: () => moveByKeyboard({ type: "up" }) },
+                { id: "down", label: "Down", onSelect: () => moveByKeyboard({ type: "down" }) },
+                ...columns
+                  .filter((column) => column !== columnId)
+                  .map((target) => ({
+                    id: target,
+                    label: `To ${columnLabels[target]}`,
+                    onSelect: () => transfer(target),
+                  })),
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }

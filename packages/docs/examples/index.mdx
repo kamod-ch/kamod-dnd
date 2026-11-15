@@ -9,7 +9,7 @@ import { KanbanDemo, kanbanDemoCode } from "../components/demos/KanbanDemo";
 import { EditorBlocksDemo, editorBlocksDemoCode } from "../components/demos/EditorBlocksDemo";
 import { HorizontalListDemo, horizontalListDemoCode } from "../components/demos/HorizontalListDemo";
 
-Each card runs the real `@kamod-ch/dnd` package from this workspace — not a mock. Drag from the **⠿** handle. On sortable rows, **Space/Enter** picks up and drops; **arrow keys** move within the same container. Kanban and editor demos also expose keyboard buttons for cross-container moves.
+Each card runs the real `@kamod-ch/dnd` package from this workspace. Drag from the **⠿** handle. The line under the preview shows the last move, or a rejected drop, and **Reset** restores the start order. Code stays under the preview.
 
 ## Sortable list
 
@@ -18,7 +18,8 @@ Single container, reorder by index. Target index is computed **after removing** 
 <ExampleFrame
   id="sortable-list"
   title="Vertical list"
-  description="Minimal pattern from the package README — one container id and applyMoveIntentToIds."
+  description="One container id. applyMoveIntentToIds writes the next order after the item is removed from the source."
+  hint="Space or Enter picks up and drops. Arrow keys move. Escape cancels."
   preview={<SortableListDemo />}
   code={sortableListDemoCode}
   badges={["sortable", "handle", "keyboard"]}
@@ -32,10 +33,11 @@ Same sortable hooks with `orientation: "horizontal"` on the container (LTR chip 
 <ExampleFrame
   id="horizontal-list"
   title="Horizontal list"
-  description="Left/right closest-edge hit testing; array order is unchanged (no id reversal for RTL)."
+  description="Left and right closest-edge hit testing. Array order stays left to right."
+  hint="Space or Enter picks up and drops. Left and right arrows move along the row."
   preview={<HorizontalListDemo />}
   code={horizontalListDemoCode}
-  badges={["orientation", "horizontal"]}
+  badges={["orientation", "horizontal", "keyboard"]}
   class="not-prose my-8"
 />
 
@@ -46,7 +48,8 @@ Three columns with transfer into an empty **done** column. Cards whose title con
 <ExampleFrame
   id="kanban"
   title="Cross-container transfer"
-  description="Remap domain objects from order maps after each MoveIntent."
+  description="Remap the cards from the next id order after each MoveIntent. A title containing blocked cannot enter Done."
+  hint="Drag between columns. Move runs keyboard transfers, including into another column."
   preview={<KanbanDemo />}
   code={kanbanDemoCode}
   badges={["dropRule", "transfer", "keyboard"]}
@@ -60,7 +63,8 @@ Variable-height blocks (heading, text, image). Text remains selectable because d
 <ExampleFrame
   id="editor-blocks"
   title="Editor-style blocks"
-  description="Same pattern as examples/editor-blocks in the repo."
+  description="Variable-height blocks. The drag handle leaves the text selectable, and scrollRef keeps the list auto-scrolling."
+  hint="Drag the handle. Move steps the block up or down from the keyboard."
   preview={<EditorBlocksDemo />}
   code={editorBlocksDemoCode}
   badges={["scrollRef", "a11y", "keyboard"]}
