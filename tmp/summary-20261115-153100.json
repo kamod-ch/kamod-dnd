@@ -1,0 +1,4 @@
+{
+  "summary": "Umsetzung des Plans „Session-Bugs und Drag-Rendering“ in kamod-dnd: Tastatur-Vorschau nutzt previewIndex; indexAfterRemoval für Same-Container-Padding; onDrop aktualisiert Drop-Targets vor handleDrop; handleDrop mit try/catch und Cancel ohne Doppel-drop; Batch-Gating über dropRule/onBatchMove und Member-Validierung; Item-State-Listener nur bei Flag-Wechsel; DragGhost rect-Dedup; perf-list memo; Benchmark 2 Row-Renders (100/500); Doku (AGENTS.md, Superseded-Banner, implementation-status) und Entfernen von @typescript/typescript6. pnpm check grün, pnpm test:browser separat.",
+  "current_status": "kamod-dnd @kamod-ch/dnd 0.4.1: Session-Korrektheit und Hover-Performance gehärtet, 95 Vitest-Tests, CI-Gate lokal grün; offen bleiben virtuelles Source-Pinning, Tree-GA und Grid/React-Roadmap."
+}

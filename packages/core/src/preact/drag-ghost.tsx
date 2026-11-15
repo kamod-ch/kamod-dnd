@@ -24,7 +24,21 @@ export function DragGhostPortal({ render, zIndex = 9999 }: DragGhostPortalProps)
     let frame = 0;
     const update = () => {
       const element = controller.getItemElement(snapshot.activeId!);
-      if (element?.isConnected) setRect(element.getBoundingClientRect());
+      if (element?.isConnected) {
+        const next = element.getBoundingClientRect();
+        setRect((prev) => {
+          if (
+            prev &&
+            prev.left === next.left &&
+            prev.top === next.top &&
+            prev.width === next.width &&
+            prev.height === next.height
+          ) {
+            return prev;
+          }
+          return next;
+        });
+      }
       frame = requestAnimationFrame(update);
     };
     frame = requestAnimationFrame(update);

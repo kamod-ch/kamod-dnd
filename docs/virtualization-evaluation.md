@@ -1,5 +1,7 @@
 # Virtualization evaluation
 
+> **Superseded (partial):** `getDropIndex` and detach-on-unmount shipped in 0.3.0 (see “Update (0.3.0)” below and [CHANGELOG.md](../CHANGELOG.md)). The spike “core unchanged” sections predate that release.
+
 **Decision: GO WITH EXTENSION**
 
 The current public API can drive a virtualized vertical list for rows that stay mounted. It cannot honestly claim virtualization support until two seams exist: the active item must survive being unmounted, and a container hit must be able to name an index that has no DOM node.

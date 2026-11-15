@@ -1,5 +1,7 @@
 # Tree support evaluation (decision spike)
 
+> **Superseded (implementation):** `@kamod-ch/dnd/tree` shipped in 0.2.0; see [CHANGELOG.md](../CHANGELOG.md) for current API. This document keeps the spike rationale and open certification items.
+
 Stand: 2026-10-19. Scope: **spike only** — **trees remain unsupported** by the published `@kamod-ch/dnd` package.
 
 ## Commands and results

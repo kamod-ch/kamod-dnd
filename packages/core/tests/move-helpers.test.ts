@@ -23,6 +23,25 @@ describe("move-helpers", () => {
     const idx = indexAfterRemoval(["a", "b", "c"], ["a", "b", "c"], "a", "c", "top", true);
     expect(idx).toBe(1);
   });
+
+  it("uses post-removal end index for same-container padding hit", () => {
+    const lastItem = indexAfterRemoval(["a", "b", "c"], ["a", "b", "c"], "c", null, "bottom", true);
+    expect(lastItem).toBe(2);
+    const firstItem = indexAfterRemoval(
+      ["a", "b", "c"],
+      ["a", "b", "c"],
+      "a",
+      null,
+      "bottom",
+      true,
+    );
+    expect(firstItem).toBe(2);
+  });
+
+  it("appends at length for cross-container padding hit", () => {
+    const idx = indexAfterRemoval(["a", "b"], ["x", "y"], "a", null, "bottom", false);
+    expect(idx).toBe(2);
+  });
 });
 
 describe("applyMoveIntentToIds", () => {

@@ -540,4 +540,104 @@ describe("drag announcements", () => {
     expect(statusText()).toContain("drop a");
     expect(document.activeElement).toBe(handle);
   });
+
+  it("reorders three items with two ArrowDown presses on the handle", async () => {
+    function Row({ id, label }: { id: string; label: string }) {
+      const sortable = useSortable({ id, containerId: "list", data: { n: 1 } });
+      return (
+        <button {...sortable.handleProps} aria-label={label}>
+          {label}
+        </button>
+      );
+    }
+
+    function List({ order }: { order: string[] }) {
+      const { ref } = useSortableContainer({ id: "list", itemIds: order });
+      return (
+        <div ref={ref}>
+          {order.map((id) => (
+            <Row key={id} id={id} label={`handle-${id}`} />
+          ))}
+        </div>
+      );
+    }
+
+    function App() {
+      const [order, setOrder] = useState(["a", "b", "c"]);
+      return (
+        <DndProvider<ItemData>
+          locale={locale}
+          onMove={(intent) => {
+            setOrder(applyMoveIntentToIds({ list: order }, intent).list ?? order);
+            return true;
+          }}
+        >
+          <List order={order} />
+          <div data-testid="order">{order.join(",")}</div>
+        </DndProvider>
+      );
+    }
+
+    installAnimationFrame();
+    render(<App />);
+    const handle = screen.getByRole("button", { name: "handle-a" });
+    handle.focus();
+    fireEvent.keyDown(handle, { key: " " });
+    fireEvent.keyDown(handle, { key: "ArrowDown" });
+    fireEvent.keyDown(handle, { key: "ArrowDown" });
+    fireEvent.keyDown(handle, { key: "Enter" });
+    await flushAnimationFrame();
+    expect(screen.getByTestId("order").textContent).toBe("b,c,a");
+  });
+
+  it("ArrowUp after ArrowDown returns to start index on drop", async () => {
+    function Row({ id, label }: { id: string; label: string }) {
+      const sortable = useSortable({ id, containerId: "list", data: { n: 1 } });
+      return (
+        <button {...sortable.handleProps} aria-label={label}>
+          {label}
+        </button>
+      );
+    }
+
+    function List({ order }: { order: string[] }) {
+      const { ref } = useSortableContainer({ id: "list", itemIds: order });
+      return (
+        <div ref={ref}>
+          {order.map((id) => (
+            <Row key={id} id={id} label={`handle-${id}`} />
+          ))}
+        </div>
+      );
+    }
+
+    function App() {
+      const [order, setOrder] = useState(["a", "b", "c"]);
+      return (
+        <DndProvider<ItemData>
+          locale={locale}
+          onMove={(intent) => {
+            setOrder(applyMoveIntentToIds({ list: order }, intent).list ?? order);
+            return true;
+          }}
+        >
+          <List order={order} />
+          <div data-testid="order">{order.join(",")}</div>
+        </DndProvider>
+      );
+    }
+
+    installAnimationFrame();
+    render(<App />);
+    const handle = screen.getByRole("button", { name: "handle-a" });
+    handle.focus();
+    fireEvent.keyDown(handle, { key: " " });
+    fireEvent.keyDown(handle, { key: "ArrowDown" });
+    fireEvent.keyDown(handle, { key: "ArrowDown" });
+    fireEvent.keyDown(handle, { key: "ArrowUp" });
+    fireEvent.keyDown(handle, { key: "ArrowUp" });
+    fireEvent.keyDown(handle, { key: "Enter" });
+    await flushAnimationFrame();
+    expect(screen.getByTestId("order").textContent).toBe("a,b,c");
+  });
 });

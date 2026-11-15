@@ -1,54 +1,27 @@
 # Implementation Status
 
-Stand: 2026-10-21 (0.3.0 must-haves).
+Stand: siehe [CHANGELOG.md](../CHANGELOG.md) (aktuell **0.4.1** auf npm). Der frühere 0.3.0-Stand in dieser Datei ist durch Releases 0.3–0.4 ersetzt.
 
-## Aufgaben (Ursprungsplan)
-
-| #   | Aufgabe               | Status   | Nachweis                                 |
-| --- | --------------------- | -------- | ---------------------------------------- |
-| 01  | Engine-Spike & ADR    | erledigt | `docs/engine-evaluation.md`, `spikes/*`  |
-| 02  | Paketgerüst & Vertrag | erledigt | `packages/core`                          |
-| 03  | Session & Preact      | erledigt | Vitest + E2E                             |
-| 04  | Sortable & Transfer   | erledigt | `controller.test.ts`, Kanban E2E         |
-| 05  | A11y / Touch / KB     | erledigt | Keyboard E2E; SR/Touch manuell **offen** |
-| 06  | Editor & Kanban       | erledigt | `examples/*` build                       |
-| 07  | Browser & Paket-QA    | erledigt | 24× Playwright; Performance-Docs         |
-| 08  | Doku & Beta           | erledigt | README, Checkliste, Performance          |
-
-## Prüfkommandos (zuletzt ausgeführt)
+## Schnellcheck
 
 ```bash
-pnpm check                                    # grün
-pnpm test                                     # 77+ Vitest (packages/core)
-pnpm exec playwright test                     # editor/kanban/tree e2e (chromium, firefox, webkit)
-node scripts/qa-tarball-consumer.mjs          # grün
-node scripts/benchmark-drag.mjs               # docs/performance/drag-lists.md
-node scripts/bundle-size-report.mjs           # docs/performance/bundle-size.md
+pnpm check
+pnpm test:browser    # optional; in CI unter `.github/workflows/ci.yml`
 ```
 
-## Browser-Matrix
+## Verifikation
 
-| Engine   | Ergebnis  | Anmerkung                                                     |
-| -------- | --------- | ------------------------------------------------------------- |
-| Chromium | bestanden | 8/8 Tests                                                     |
-| Firefox  | bestanden | 8/8 Tests                                                     |
-| WebKit   | bestanden | 8/8 Tests; `pnpm exec playwright install webkit` erforderlich |
+| Bereich                  | Nachweis                                                             |
+| ------------------------ | -------------------------------------------------------------------- |
+| Unit / Integration       | `packages/core/tests` (Vitest); `pnpm --filter @kamod-ch/dnd test`   |
+| Browser                  | `tests/e2e` (editor, kanban, tree)                                   |
+| Paket-QA                 | `pnpm qa:tarball`, `pnpm docs:build`                                 |
+| Performance (informativ) | `node scripts/benchmark-drag.mjs` → `docs/performance/drag-lists.md` |
 
-Touch-Emulation ersetzt keine echten Geräte ([docs/a11y-manual-checklist.md](a11y-manual-checklist.md)).
+## Offene Grenzen (unverändert)
 
-## Anforderung → Nachweis (Auszug)
+- Manuelle Screenreader- und Touch-Zertifizierung: [a11y-manual-checklist.md](a11y-manual-checklist.md).
+- `@kamod-ch/dnd/tree` bleibt **experimental** bis die Checkliste signiert ist: [tree-ga.md](tree-ga.md).
+- Virtuelle Listen: Autoscroll kann noch ein gemountetes Source-Node erfordern — [README.md](../README.md), [virtualization-evaluation.md](virtualization-evaluation.md).
 
-| Anforderung              | Status    | Nachweis                         |
-| ------------------------ | --------- | -------------------------------- |
-| Verbotener Drop          | getestet  | `controller.test.ts`, Kanban E2E |
-| Cancel / Escape          | getestet  | Editor + Kanban E2E              |
-| Transfer leere Liste     | getestet  | Kanban E2E                       |
-| Keyboard MoveIntents     | getestet  | Editor + Kanban E2E              |
-| Performance 100/500      | gemessen  | `docs/performance/drag-lists.md` |
-| Pack-Inhalt headless     | geprüft   | `pnpm pack` nur `dist/`, README  |
-| VoiceOver / NVDA / Touch | ungeprüft | Manuelle Checkliste              |
-
-## Offene Grenzen
-
-- Keine Screenreader- oder Mobilgeräte-Session in dieser Umgebung.
-- Performance-Messung ist informativ (Row-Render-Zähler während Drag), keine FPS-Garantie.
+Details zum Ursprungsplan (01–08) stehen in [development/roadmap-progress.md](development/roadmap-progress.md) (historisch).

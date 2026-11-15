@@ -88,6 +88,59 @@ describe("DndController.tryCommitBatch", () => {
     expect(events).toEqual(["move", "dropBatch"]);
   });
 
+  it("uses dropRule when batchDropRule is absent", () => {
+    const controller = new DndController<{ id: string }>({
+      dropRule: (intent) => intent.itemId !== "d",
+      onBatchMove: () => true,
+    });
+    controller.registerContainer({ id: "todo" });
+    controller.setContainerOrder("todo", ["a", "d"]);
+    const blocked = controller.tryCommitBatch({
+      kind: "batch",
+      itemIds: ["a", "d"],
+      targetContainerId: "todo",
+      targetIndex: 0,
+      members: [
+        { id: "a", containerId: "todo", data: { id: "a" } },
+        { id: "d", containerId: "todo", data: { id: "d" } },
+      ],
+    });
+    expect(blocked).toBe(false);
+  });
+
+  it("returns false without onBatchMove", () => {
+    const events: string[] = [];
+    const controller = new DndController<{ id: string }>({});
+    controller.subscribe((event) => events.push(event.type));
+    controller.registerContainer({ id: "todo" });
+    controller.setContainerOrder("todo", ["a"]);
+    const ok = controller.tryCommitBatch({
+      kind: "batch",
+      itemIds: ["a"],
+      targetContainerId: "todo",
+      targetIndex: 0,
+      members: [{ id: "a", containerId: "todo", data: { id: "a" } }],
+    });
+    expect(ok).toBe(false);
+    expect(events).toEqual([]);
+  });
+
+  it("rejects members not in registered container order", () => {
+    const controller = new DndController<{ id: string }>({
+      onBatchMove: () => true,
+    });
+    controller.registerContainer({ id: "todo" });
+    controller.setContainerOrder("todo", ["a"]);
+    const ok = controller.tryCommitBatch({
+      kind: "batch",
+      itemIds: ["a"],
+      targetContainerId: "todo",
+      targetIndex: 0,
+      members: [{ id: "a", containerId: "doing", data: { id: "a" } }],
+    });
+    expect(ok).toBe(false);
+  });
+
   it("does not change MoveIntent shape", () => {
     const intent = buildMoveIntent({
       itemId: "a",

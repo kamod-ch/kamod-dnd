@@ -41,6 +41,12 @@ export function handleSortableHandleKeyDown<TData>(args: {
   const idx = order.indexOf(itemId);
   if (idx < 0) return;
 
+  const snapshot = controller.readSnapshot();
+  const currentPreview =
+    snapshot.previewContainerId === containerId && snapshot.previewIndex !== null
+      ? snapshot.previewIndex
+      : idx;
+
   let delta = 0;
   if (orientation === "vertical") {
     if (event.key === "ArrowUp") delta = -1;
@@ -52,7 +58,7 @@ export function handleSortableHandleKeyDown<TData>(args: {
   }
   if (delta === 0) return;
   event.preventDefault();
-  const next = Math.max(0, Math.min(idx + delta, order.length - 1));
-  if (next === idx) return;
+  const next = Math.max(0, Math.min(currentPreview + delta, order.length - 1));
+  if (next === currentPreview) return;
   controller.setPreviewIndex(containerId, next);
 }

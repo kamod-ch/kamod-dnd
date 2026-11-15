@@ -1,5 +1,7 @@
 # Multi-select evaluation
 
+> **Superseded (implementation):** `BatchMoveIntent`, `onBatchMove`, and related helpers shipped in 0.4.0; see [CHANGELOG.md](../CHANGELOG.md).
+
 **Decision: GO WITH EXTENSION**
 
 Add a separate `BatchMoveIntent<TData>` and leave `MoveIntent<TData>` as one item. `itemId` stays a single id. Selection stays application state. The library does not own the lists.

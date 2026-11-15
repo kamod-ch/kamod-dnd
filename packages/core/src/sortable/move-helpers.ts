@@ -69,7 +69,13 @@ export function indexAfterRemoval(
   edge: "top" | "bottom",
   sameContainer: boolean,
 ): number {
-  if (!overId) return targetIds.length;
+  if (!overId) {
+    if (sameContainer) {
+      const from = sourceIds.indexOf(itemId);
+      if (from >= 0) return targetIds.length - 1;
+    }
+    return targetIds.length;
+  }
   const overIndex = targetIds.indexOf(overId);
   if (overIndex < 0) return targetIds.length;
   let idx = edge === "bottom" ? overIndex + 1 : overIndex;

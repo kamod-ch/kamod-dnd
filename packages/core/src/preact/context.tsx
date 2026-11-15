@@ -77,17 +77,18 @@ export function DndProvider<TData>({
         const rule = optionsRef.current.dropRule;
         return rule ? rule(intent) : true;
       },
-      batchDropRule: (ctx) => {
-        const rule = optionsRef.current.batchDropRule;
-        return rule ? rule(ctx) : true;
-      },
+      batchDropRule: optionsRef.current.batchDropRule
+        ? (ctx) => optionsRef.current.batchDropRule!(ctx)
+        : undefined,
       onMove: (intent) => {
         const accepted = optionsRef.current.onMove?.(intent);
         if (accepted !== false) scheduleFocusRef.current(intent.itemId);
         return accepted;
       },
       onBatchMove: (intent: BatchMoveIntent<TData>) => {
-        const accepted = optionsRef.current.onBatchMove?.(intent);
+        const handler = optionsRef.current.onBatchMove;
+        if (!handler) return false;
+        const accepted = handler(intent);
         if (accepted !== false && intent.itemIds[0]) {
           scheduleFocusRef.current(intent.itemIds[0]);
         }

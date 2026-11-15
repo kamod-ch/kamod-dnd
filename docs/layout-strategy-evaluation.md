@@ -1,5 +1,7 @@
 # Layout strategy evaluation
 
+> **Superseded (implementation):** `orientation` on sortable containers shipped in 0.3.0; see [CHANGELOG.md](../CHANGELOG.md). Spike “unchanged core” notes below are historical.
+
 **Decision: horizontal-only extension**
 
 Horizontal lists get an optional `orientation: "vertical" | "horizontal"` on the sortable container. The default stays `"vertical"`. Logical before/after is that axis plus the container element's `dir`. `MoveIntent` stays one item and one index. Consumers keep source order.

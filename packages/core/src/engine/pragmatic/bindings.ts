@@ -109,7 +109,17 @@ export function bindPragmaticEngine<TData>(
           dropTargetCount: location.current.dropTargets.length,
           buttons: location.current.input.buttons,
         });
-        deliverElementDrop(controller, source.data, clear ? [] : undefined);
+        if (clear) {
+          deliverElementDrop(controller, source.data, []);
+          return;
+        }
+        deliverElementDragOver(
+          controller,
+          source.data,
+          location.current.dropTargets,
+          location.current.input,
+        );
+        deliverElementDrop(controller, source.data);
       },
     }),
   );

@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { deliverElementDrop, elementDropShouldClear } from "../src/engine/pragmatic/bindings.js";
+import {
+  deliverElementDragOver,
+  deliverElementDrop,
+  elementDropShouldClear,
+} from "../src/engine/pragmatic/bindings.js";
 import { ITEM_TYPE, SCOPE_KEY } from "../src/engine/pragmatic/types.js";
 import { DndController } from "../src/session/controller.js";
 import type { DndSessionEvent } from "../src/session/types.js";
@@ -305,6 +309,86 @@ describe("DndController", () => {
       data: { n: 1 },
     });
     expect(controller.tryCommitMove(intent)).toBe(false);
+  });
+
+  it("resets idle after onMove throws", () => {
+    const onCancel = vi.fn();
+    const controller = new DndController<{ n: number }>({
+      onMove: () => {
+        throw new Error("onMove failed");
+      },
+      onCancel,
+    });
+    setupList(controller, ["a", "b", "c"]);
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: "b",
+      overContainerId: "list",
+      edge: "bottom",
+    });
+    controller.handleDrop();
+    expect(onCancel).toHaveBeenCalledWith("rejected");
+    expect(controller.readSnapshot().phase).toBe("idle");
+  });
+
+  it("emits only cancel when onMove sync-updates order", () => {
+    const events: string[] = [];
+    const controller = new DndController<{ n: number }>({
+      onMove: () => {
+        controller.setContainerOrder("list", ["b", "a", "c"]);
+        return true;
+      },
+    });
+    controller.subscribe((event) => events.push(event.type));
+    setupList(controller, ["a", "b", "c"]);
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: "c",
+      overContainerId: "list",
+      edge: "top",
+    });
+    controller.handleDrop();
+    expect(events.filter((type) => type === "drop")).toHaveLength(0);
+    expect(events).toContain("cancel");
+    expect(controller.readSnapshot().phase).toBe("idle");
+  });
+
+  it("commits preview refreshed by deliverElementDragOver on drop", () => {
+    const onMove = vi.fn();
+    const controller = new DndController<{ n: number }>({ onMove });
+    setupList(controller, ["a", "b", "c"]);
+    const sourceData = {
+      type: ITEM_TYPE,
+      itemId: "a",
+      containerId: "list",
+      [SCOPE_KEY]: controller.scopeToken,
+    };
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: "b",
+      overContainerId: "list",
+      edge: "top",
+    });
+    expect(controller.readSnapshot().previewIndex).toBe(0);
+    deliverElementDragOver(
+      controller,
+      sourceData,
+      [
+        {
+          data: {
+            type: ITEM_TYPE,
+            itemId: "c",
+            containerId: "list",
+            closestEdge: "bottom",
+            [SCOPE_KEY]: controller.scopeToken,
+          },
+        },
+      ],
+      { clientX: 0, clientY: 0 },
+    );
+    deliverElementDrop(controller, sourceData);
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0]![0].targetIndex).toBe(2);
   });
 });
 

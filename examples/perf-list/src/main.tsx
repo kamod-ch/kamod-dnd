@@ -1,6 +1,7 @@
 import { DndProvider, type MoveIntent } from "@kamod-ch/dnd";
 import { applyMoveIntentToIds, useSortable, useSortableContainer } from "@kamod-ch/dnd/sortable";
 import { render } from "preact";
+import { memo } from "preact/compat";
 import { useMemo, useRef, useState } from "preact/hooks";
 
 type Row = { id: string; label: string };
@@ -89,7 +90,7 @@ function PerfList({ order, byId }: { order: string[]; byId: Map<string, Row> }) 
   );
 }
 
-function PerfRow({ row }: { row: Row }) {
+const PerfRow = memo(function PerfRow({ row }: { row: Row }) {
   rowRenderCount += 1;
   const { itemRef, handleRef } = useSortable({
     id: row.id,
@@ -119,6 +120,6 @@ function PerfRow({ row }: { row: Row }) {
       <span>{row.label}</span>
     </div>
   );
-}
+});
 
 render(<App />, document.getElementById("app")!);

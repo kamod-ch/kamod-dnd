@@ -82,10 +82,17 @@ export class DndController<TData = unknown> {
       this.#itemStateListeners.set(itemId, set);
     }
     set.add(listener);
-    listener(this.#readItemState(itemId));
+    let last = this.#readItemState(itemId);
+    listener(last);
+    const notifyIfChanged = () => {
+      const next = this.#readItemState(itemId);
+      if (next.isDragging === last.isDragging && next.isOver === last.isOver) return;
+      last = next;
+      listener(next);
+    };
     const disposers = [
-      this.#activeId.subscribe(() => listener(this.#readItemState(itemId))),
-      this.#overId.subscribe(() => listener(this.#readItemState(itemId))),
+      this.#activeId.subscribe(notifyIfChanged),
+      this.#overId.subscribe(notifyIfChanged),
     ];
     return () => {
       set!.delete(listener);
@@ -471,7 +478,16 @@ export class DndController<TData = unknown> {
     }
 
     this.#phase.value = "dropping";
-    const accepted = this.#options.onMove?.(intent);
+    let accepted: boolean | void | undefined;
+    try {
+      accepted = this.#options.onMove?.(intent);
+    } catch {
+      if (this.#phase.value === "dropping") {
+        this.cancel("rejected");
+      }
+      return;
+    }
+    if (this.#phase.value !== "dropping") return;
     if (accepted === false) {
       this.cancel("rejected");
       return;
@@ -502,6 +518,10 @@ export class DndController<TData = unknown> {
   }
 
   tryCommitBatch(intent: BatchMoveIntent<TData>): boolean {
+    for (const member of intent.members) {
+      const order = this.getContainerIds(member.containerId);
+      if (!order.includes(member.id)) return false;
+    }
     const batchRule = this.#options.batchDropRule;
     for (const member of intent.members) {
       const allowed = batchRule
