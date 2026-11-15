@@ -94,6 +94,59 @@ describe("DndController", () => {
     expect(controller.getItemData("a")).toEqual({ n: 1 });
   });
 
+  it("clamps getDropIndex projection", () => {
+    const controller = new DndController<{ n: number }>({});
+    setupList(controller, ["a", "b", "c"]);
+    controller.updateContainerRegistration({
+      id: "list",
+      getDropIndex: () => 99,
+    });
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: null,
+      overContainerId: "list",
+      edge: "bottom",
+      clientX: 0,
+      clientY: 0,
+    });
+    expect(controller.readSnapshot().previewIndex).toBe(3);
+  });
+
+  it("ignores getDropIndex when over an item", () => {
+    const controller = new DndController<{ n: number }>({});
+    setupList(controller, ["a", "b", "c"]);
+    controller.updateContainerRegistration({
+      id: "list",
+      getDropIndex: () => 0,
+    });
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: "c",
+      overContainerId: "list",
+      edge: "top",
+      clientX: 0,
+      clientY: 0,
+    });
+    expect(controller.readSnapshot().previewIndex).not.toBe(0);
+  });
+
+  it("uses horizontal RTL edges in handleDragOver", () => {
+    const controller = new DndController<{ n: number }>({});
+    setupList(controller, ["a", "b", "c"]);
+    controller.updateContainerRegistration({
+      id: "list",
+      orientation: "horizontal",
+      direction: "rtl",
+    });
+    controller.handleDragStart("a");
+    controller.handleDragOver({
+      overId: "b",
+      overContainerId: "list",
+      edge: "left",
+    });
+    expect(controller.readSnapshot().previewIndex).toBe(1);
+  });
+
   it("uses getDropIndex for container hits without an over item", () => {
     const controller = new DndController<{ n: number }>({});
     setupList(controller, ["a", "b", "c"]);

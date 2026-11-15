@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.3 – 2026-11-15
+
+- **Virtual drag pin:** `DndProvider` keeps a hidden drag source while the active row unmounts; Pragmatic binding moves to the pin so autoscroll does not cancel detached virtual rows.
+- **Direction:** `readDirection` honors computed `direction`; container `dir`/`style` mutations refresh registered direction; keyboard uses container registration direction first.
+- **Tests:** ghost portal, pointer delay, `getDropIndex`, horizontal RTL, tree up/down, pinned drag unit test.
+
+## 0.4.2 – 2026-11-15
+
+Correctness and drag-hover performance (no API break).
+
+- **Keyboard:** sortable handle arrows advance from `previewIndex`, so multi-step reorder in one session works.
+- **Index:** same-container container hits use post-removal end index (`length - 1`), not `length`.
+- **Pointer drop:** `onDrop` applies the final drop-target list before `handleDrop` commits.
+- **`handleDrop`:** `onMove` throw or sync session cancel yields a single terminal state (no stuck `dropping` or drop after cancel).
+- **Batch:** `tryCommitBatch` respects `dropRule` when `batchDropRule` is omitted; rejects missing `onBatchMove` and members not in registered orders.
+- **Performance:** item-state subscriptions notify only when `isDragging` / `isOver` change; `DragGhostPortal` skips redundant rect updates; perf-list rows memoized; [drag-lists.md](docs/performance/drag-lists.md) re-measured.
+- **DX:** [AGENTS.md](AGENTS.md); evaluation docs superseded banners; drop unused `@typescript/typescript6` devDependency.
+
 ## 0.4.1 – 2026-10-21
 
 - Erste Veröffentlichung von `@kamod-ch/dnd` auf npm mit dem Funktionsumfang von 0.4.0.

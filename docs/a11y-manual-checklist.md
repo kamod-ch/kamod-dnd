@@ -6,7 +6,7 @@ Nicht in CI ausgeführt. Engineering prep for 0.4 adds batch/tree message keys a
 
 | Date | Package version | Tester | VoiceOver | NVDA | iOS touch | Android touch | Reduced motion | Notes |
 | ---- | --------------- | ------ | --------- | ---- | --------- | ------------- | -------------- | ----- |
-|      | 0.4.0           |        | [ ]       | [ ]  | [ ]       | [ ]           | [ ]            |       |
+|      | 0.4.3           |        | [ ]       | [ ]  | [ ]       | [ ]           | [ ]            |       |
 
 Automatisierte DOM-Tests am 2026-10-19 prüfen Fokus nach Move/Cancel, menschliche Labels und das Tree-Beispiel in Chromium, Firefox und WebKit. Sie schließen keinen der folgenden Punkte ab. Offen bleiben VoiceOver + Safari, NVDA + Firefox, iOS Safari, Android Chrome und `prefers-reduced-motion` auf einem echten Gerät. Für den Baum zusätzlich: Fokusreihenfolge, `aria-level`/`aria-expanded`, Reparent-Ansage, Scrollen und Zyklus-Ablehnung.
 
@@ -23,3 +23,10 @@ Automatisierte DOM-Tests am 2026-10-19 prüfen Fokus nach Move/Cancel, menschlic
 ## Reduced motion
 
 - [ ] `prefers-reduced-motion: reduce` – keine unnötigen Animationen in Beispielen (Theme/Library respektiert `reducedMotion` auf Provider).
+
+## Tree (`examples/tree`, für 0.5.0 GA)
+
+- [ ] VoiceOver/NVDA: keyboard indent/outdent; Fokus bleibt auf Handle nach Move.
+- [ ] Reparent per Pointer in verschachtelte Child-Liste; App ruft `announce("reparented", { item, container })` (oder locale-Äquivalent).
+- [ ] Collapsed parent: 900ms-Hover expandiert Parent (Example-Rezept); Escape bricht ab ohne Ordnungsänderung.
+- [ ] `aria-level` / `aria-expanded` auf Fixture-Knoten plausibel nach Move.

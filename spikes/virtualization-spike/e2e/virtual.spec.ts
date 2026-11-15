@@ -102,7 +102,7 @@ test.describe("virtualization spike", () => {
     await expect(page.getByTestId("handle-row-0")).toBeFocused();
   });
 
-  test("autoscroll unmounts the source row and cancels the drag", async ({ page }) => {
+  test("autoscroll keeps the drag alive after the source row unmounts", async ({ page }) => {
     await expect(page.getByTestId("row-row-30")).toHaveCount(0);
     const handle = page.getByTestId("handle-row-0");
     const scroll = page.getByTestId("scroll-main");
@@ -116,9 +116,8 @@ test.describe("virtualization spike", () => {
     await expect
       .poll(async () => scroll.evaluate((el) => (el as HTMLElement).scrollTop), { timeout: 8_000 })
       .toBeGreaterThan(200);
-    await expect(page.getByRole("status")).toContainText("Cancelled");
+    await expect(page.getByRole("status")).not.toContainText("Cancelled");
     await expect(page.getByTestId("row-row-0")).toHaveCount(0);
-    await expect(page.getByTestId("index-row-0")).toHaveText("Index row-0: 0");
     await page.mouse.up();
   });
 

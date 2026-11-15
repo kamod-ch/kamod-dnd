@@ -1,5 +1,5 @@
 import { createContext } from "preact";
-import { useContext, useEffect, useMemo, useRef } from "preact/hooks";
+import { useContext, useEffect, useLayoutEffect, useMemo, useRef } from "preact/hooks";
 import type { ComponentChildren, RefObject } from "preact";
 import { DndController, type DndControllerOptions } from "../session/controller.js";
 import type { BatchMoveIntent, DndId } from "../session/types.js";
@@ -100,6 +100,13 @@ export function DndProvider<TData>({
     });
   }
   const controller = controllerRef.current;
+  const dragPinRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const pin = dragPinRef.current;
+    controller.setDragPinElement(pin);
+    return () => controller.setDragPinElement(null);
+  }, [controller]);
 
   const localeRef = useRef(locale);
   localeRef.current = locale;
@@ -153,6 +160,19 @@ export function DndProvider<TData>({
   return (
     <DndContext.Provider value={value as DndContextValue<unknown>}>
       {children}
+      <div
+        ref={dragPinRef}
+        aria-hidden
+        style={{
+          position: "fixed",
+          left: -9999,
+          top: 0,
+          width: 1,
+          height: 1,
+          opacity: 0,
+          pointerEvents: "none",
+        }}
+      />
       <DndAnnouncer
         controller={controller}
         localeRef={localeRef}

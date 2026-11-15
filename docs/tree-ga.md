@@ -2,6 +2,8 @@
 
 `@kamod-ch/dnd/tree` stays **experimental** in README until manual certification completes.
 
+**Engineering prep (0.4.3):** expanded [a11y-manual-checklist.md](a11y-manual-checklist.md) tree section; `reparented` / batch announce pattern in README and [decisions/003-batch-a11y.md](decisions/003-batch-a11y.md). Removing the experimental label still requires a signed checklist row.
+
 ## Required before removing “experimental”
 
 1. All items in [a11y-manual-checklist.md](a11y-manual-checklist.md) signed off for `@kamod-ch/dnd` **0.4+** (include tree reparent, keyboard indent/outdent, collapsed hover).

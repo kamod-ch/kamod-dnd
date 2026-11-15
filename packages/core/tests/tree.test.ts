@@ -138,6 +138,23 @@ describe("tree helpers", () => {
     expect(restored.state.nodes.rA?.childIds).toEqual(["c1", "c2"]);
   });
 
+  it("projects keyboard up and down within siblings", () => {
+    const start = createFixtureTree();
+    const down = projectKeyboardMove(start, "c1", { type: "down" });
+    expect(down).toMatchObject({
+      itemId: "c1",
+      sourceContainerId: "rA",
+      targetContainerId: "rA",
+      targetIndex: 1,
+    });
+    const up = projectKeyboardMove(start, "c2", { type: "up" });
+    expect(up).toMatchObject({
+      itemId: "c2",
+      targetContainerId: "rA",
+      targetIndex: 0,
+    });
+  });
+
   it("returns null for boundary-invalid indent and outdent", () => {
     const start = createFixtureTree();
     expect(projectKeyboardMove(start, "c1", { type: "indent" })).toBeNull();

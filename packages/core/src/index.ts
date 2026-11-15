@@ -41,6 +41,7 @@ export {
   type SortableContainerProps,
   type SortableItemProps,
 } from "./sortable/hooks.js";
+export { physicalEdge, readDirection, type Direction } from "./sortable/orientation.js";
 export {
   buildMoveIntent,
   indexAfterRemoval,

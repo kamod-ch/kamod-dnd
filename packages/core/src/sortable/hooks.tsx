@@ -98,7 +98,7 @@ export function useSortable<TData>(props: SortableItemProps<TData>) {
     const onKeyDown = (event: KeyboardEvent) => {
       const reg = controller.getContainerRegistration(props.containerId);
       const orientation = reg?.orientation ?? "vertical";
-      const direction = readDirection(itemRef.current?.parentElement ?? handle);
+      const direction = reg?.direction ?? readDirection(itemRef.current?.parentElement ?? handle);
       handleSortableHandleKeyDown({
         event,
         controller,

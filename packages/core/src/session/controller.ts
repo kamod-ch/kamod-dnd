@@ -15,6 +15,7 @@ import type {
   SortableOrientation,
 } from "./types.js";
 import type { PointerActivation } from "../engine/pragmatic/pointer-activation.js";
+import { registerDraggableElement } from "../engine/pragmatic/bindings.js";
 import { buildMoveIntent, indexAfterRemoval, isNoOpMove } from "../sortable/move-helpers.js";
 import { indexEdgeFromPhysical } from "../sortable/orientation.js";
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
@@ -52,6 +53,9 @@ export class DndController<TData = unknown> {
   readonly #handles = new Map<DndId, HTMLElement>();
   readonly #itemElements = new Map<DndId, HTMLElement>();
   readonly #detachedItemIds = new Set<DndId>();
+  #dragPinElement: HTMLElement | null = null;
+  readonly #rowDraggableCleanups = new Map<DndId, () => void>();
+  #pinnedDraggableCleanup: (() => void) | null = null;
   readonly pointerActivation: PointerActivation | undefined;
 
   readonly #itemStateListeners = new Map<DndId, Set<ItemStateListener>>();
@@ -255,10 +259,47 @@ export class DndController<TData = unknown> {
   detachItem(id: DndId): void {
     if (this.#activeId.value === id && this.#itemStillInOrder(id)) {
       this.#detachedItemIds.add(id);
-      this.#handles.delete(id);
       return;
     }
     this.unregisterItem(id);
+  }
+
+  setDragPinElement(element: HTMLElement | null): void {
+    this.#dragPinElement = element;
+  }
+
+  getDragPinElement(): HTMLElement | null {
+    return this.#dragPinElement;
+  }
+
+  registerRowDraggableCleanup(itemId: DndId, cleanup: () => void): void {
+    this.#rowDraggableCleanups.set(itemId, cleanup);
+  }
+
+  adoptPinnedDragSource(args: {
+    itemId: DndId;
+    containerId: DndId;
+    handle: HTMLElement;
+    disabled?: boolean;
+  }): boolean {
+    const pin = this.#dragPinElement;
+    if (!pin || !pin.isConnected || this.#activeId.value !== args.itemId) return false;
+    const rowCleanup = this.#rowDraggableCleanups.get(args.itemId);
+    if (!rowCleanup) return false;
+    this.#pinnedDraggableCleanup?.();
+    rowCleanup();
+    this.#rowDraggableCleanups.delete(args.itemId);
+    this.#detachedItemIds.add(args.itemId);
+    this.#pinnedDraggableCleanup = registerDraggableElement({
+      element: pin,
+      handle: args.handle,
+      itemId: args.itemId,
+      containerId: args.containerId,
+      scope: this.scopeToken,
+      controller: this,
+      disabled: args.disabled,
+    });
+    return true;
   }
 
   unregisterItem(id: DndId): void {
@@ -282,7 +323,9 @@ export class DndController<TData = unknown> {
   }
 
   unregisterHandle(id: DndId, element: HTMLElement): void {
-    if (this.#handles.get(id) === element) this.#handles.delete(id);
+    if (this.#handles.get(id) !== element) return;
+    if (this.#activeId.value === id && this.#detachedItemIds.has(id)) return;
+    this.#handles.delete(id);
   }
 
   registerItemElement(id: DndId, element: HTMLElement): void {
@@ -559,6 +602,9 @@ export class DndController<TData = unknown> {
     this.#activeData.value = null;
     this.#lastOverKey = null;
     this.#detachedItemIds.clear();
+    this.#pinnedDraggableCleanup?.();
+    this.#pinnedDraggableCleanup = null;
+    this.#rowDraggableCleanups.clear();
   }
 
   dispose(): void {

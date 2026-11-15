@@ -58,4 +58,8 @@ Until both exist, virtualization stays outside the supported API.
 
 ## Update (0.3.0)
 
-Core now ships both seams: `getDropIndex` on `useSortableContainer` and detach-on-unmount for the active id while it remains in `itemIds`. Pointer drags may still end when Pragmatic tears down the source `draggable()` node — keep the active row mounted or use a pinned overlay during autoscroll (see README).
+Core now ships both seams: `getDropIndex` on `useSortableContainer` and detach-on-unmount for the active id while it remains in `itemIds`.
+
+## Update (0.4.3)
+
+`DndProvider` registers a hidden drag-pin element. When the active row unmounts while its id stays in order, the library moves the Pragmatic draggable binding to that pin so autoscroll does not cancel the session. Completing a drop onto a row that mounts after scroll still requires correct `getDropIndex` / hover targets.

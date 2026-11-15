@@ -84,6 +84,8 @@ Vite demos use `@kamod-ch/themes/theme.css` and `@kamod-ch/ui/button` where help
 
 Safe to import the package without DOM; mount `DndProvider` only on the client.
 
+**0.4.2** hardens session consistency (keyboard preview steps, final drop target, batch drop rules) and cuts per-hover list re-renders during pointer drags. See [CHANGELOG.md](CHANGELOG.md).
+
 ## Development
 
 | Command              | Purpose                                                           |
@@ -98,7 +100,7 @@ Safe to import the package without DOM; mount `DndProvider` only on the client.
 
 **In scope:** vertical and horizontal sortables, transfers (including empty targets), handle-only pointer drag, escape cancel, handle keyboard session, localized announcements, virtualization seams (`getDropIndex`, detach active row on unmount while id stays in order).
 
-**Not in MVP:** grids, built-in virtualizer, file/cross-window DnD. Pointer autoscroll across a virtual window may still require keeping the source node mounted (see `docs/virtualization-evaluation.md`).
+**Not in MVP:** grids, built-in virtualizer, file/cross-window DnD. When a virtualized row unmounts during pointer drag, `DndProvider` keeps a hidden drag-pin so the session can survive autoscroll; dropping on a newly mounted row still depends on hover/`getDropIndex` (see `docs/virtualization-evaluation.md`).
 
 **Trees (opt-in, experimental):** import `@kamod-ch/dnd/tree` and model each parent’s children as a container id. `examples/tree` is the browser reference, including a 900ms collapsed-parent hover recipe owned by the example. Flattened and virtualized trees are unsupported. Touch and screen-reader certification are still manual ([`docs/a11y-manual-checklist.md`](docs/a11y-manual-checklist.md), [`docs/tree-evaluation.md`](docs/tree-evaluation.md)).
 
@@ -119,6 +121,8 @@ The library does not resolve server conflicts or keep a stale preview after one 
 ## Accessible labels and focus
 
 Pass `getItemLabel(id, data)` and `getContainerLabel(id)` when announcements should speak human names. Without them, messages keep using the ids. Locale message functions are unchanged.
+
+For tree reparent and multi-select batch pickup/hover, call `announce("reparented", …)` / `announce("pickedUpBatch", …)` from your app (see [`docs/decisions/003-batch-a11y.md`](docs/decisions/003-batch-a11y.md)).
 
 After an accepted move or a cancellation, the provider focuses that item's handle on the second animation frame. The first frame lets Preact commit the controlled update and lets the browser release focus from a control that unmounted; the second frame reads the handle registry. Each provider keeps its own registry. Hover and a rejected keyboard move do not move focus. If the item is gone or disabled, an optional `focusFallbackRef` is focused when that element is still connected; otherwise the library leaves focus where the application put it.
 

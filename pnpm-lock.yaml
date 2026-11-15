@@ -294,8 +294,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       '@atlaskit/pragmatic-drag-and-drop-auto-scroll':
-        specifier: ^2.0.0
-        version: 2.1.5
+        specifier: ^3.2.1
+        version: 3.2.1
       '@atlaskit/pragmatic-drag-and-drop-hitbox':
         specifier: ^3.0.0
         version: 3.0.0
@@ -382,17 +382,11 @@ packages:
     resolution: {integrity: sha512-A6f1nKy99I6tyoK82U6kBHvQQZmdHmTmPzJYPY/0eaOW0r8/qPmEOwjGHs+hL/vCgOwQTupu4LT1XtXNUuDruA==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
-  '@atlaskit/pragmatic-drag-and-drop-auto-scroll@2.1.5':
-    resolution: {integrity: sha512-InLvVhZAHPBfv3CxuG4AfOQuhNJjaFy69YBfodPMWtRFQNQAKa9Yb3vL9Ho6qsD9qKUBuJa4A5k7QddaXQ4Eyw==}
-
   '@atlaskit/pragmatic-drag-and-drop-auto-scroll@3.2.1':
     resolution: {integrity: sha512-2fhWAG48EjPoKhoHLG6RcT3/VaCzYEbRb6BtA/Vcfx4FrL0P1KrEgBJ6OAwB0X8MOV6UH22YgjFFHjv8fQD9rA==}
 
   '@atlaskit/pragmatic-drag-and-drop-hitbox@3.0.0':
     resolution: {integrity: sha512-AGLp1ewjm07eRN2NL62awllSM19FrWVZMQYfZA/jugQlpaeoTr5ah2DE7zfiEt7yrg34htoKQVM+y6SGIQYs2A==}
-
-  '@atlaskit/pragmatic-drag-and-drop@1.8.1':
-    resolution: {integrity: sha512-uXWNPpL8n4OmTVbduH7nq8pk8htqGo/prR5cYEE8sVCPJGAUMWn6lzvWTfI+4VCeQvHiDRODVz4YzH06OVAxhw==}
 
   '@atlaskit/pragmatic-drag-and-drop@4.0.0':
     resolution: {integrity: sha512-pyDo2B5NiaExoKGmgeXKGNUL4aR4UzzSZm8QWWjYTEyBLVqSqKyKUwtVxMw2YEkakagOGFONUdHM32LAH2nPug==}
@@ -3331,11 +3325,6 @@ snapshots:
       is-potential-custom-element-name: 1.0.1
       lru-cache: 11.5.3
 
-  '@atlaskit/pragmatic-drag-and-drop-auto-scroll@2.1.5':
-    dependencies:
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
-      '@babel/runtime': 7.29.10
-
   '@atlaskit/pragmatic-drag-and-drop-auto-scroll@3.2.1':
     dependencies:
       '@atlaskit/pragmatic-drag-and-drop': 4.0.0
@@ -3345,12 +3334,6 @@ snapshots:
     dependencies:
       '@atlaskit/pragmatic-drag-and-drop': 4.0.0
       '@babel/runtime': 7.29.10
-
-  '@atlaskit/pragmatic-drag-and-drop@1.8.1':
-    dependencies:
-      '@babel/runtime': 7.29.10
-      bind-event-listener: 3.0.0
-      raf-schd: 4.0.3
 
   '@atlaskit/pragmatic-drag-and-drop@4.0.0':
     dependencies:

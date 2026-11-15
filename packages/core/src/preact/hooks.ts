@@ -85,8 +85,8 @@ export function useDraggable<TData>(args: {
     const element = args.itemRef.current;
     const handle = args.handleRef.current;
     if (!element || !handle) return;
-    if (controller.isItemDetached(id)) return () => {};
-    return registerDraggableElement({
+    if (controller.isItemDetached(id) && controller.getDragPinElement()) return () => {};
+    const cleanup = registerDraggableElement({
       element,
       handle,
       itemId: id,
@@ -95,6 +95,24 @@ export function useDraggable<TData>(args: {
       controller,
       disabled,
     });
+    controller.registerRowDraggableCleanup(id, cleanup);
+    return () => {
+      const snapshot = controller.readSnapshot();
+      if (
+        snapshot.activeId === id &&
+        snapshot.phase === "dragging" &&
+        controller.getDragPinElement()
+      ) {
+        const adopted = controller.adoptPinnedDragSource({
+          itemId: id,
+          containerId,
+          handle,
+          disabled,
+        });
+        if (adopted) return;
+      }
+      cleanup();
+    };
   }, [controller, id, containerId, disabled, args.itemRef, args.handleRef]);
 }
 
@@ -131,6 +149,20 @@ export function useDroppable(args: {
     }
     return undefined;
   }, [controller, kind, containerId, disabled, id, args.options.orientation, args.ref]);
+
+  useEffect(() => {
+    if (kind !== "container") return;
+    const element = args.ref.current;
+    if (!element) return;
+    const observer = new MutationObserver(() => {
+      controller.updateContainerRegistration({
+        id: containerId,
+        direction: readDirection(element),
+      });
+    });
+    observer.observe(element, { attributes: true, attributeFilter: ["dir", "style"] });
+    return () => observer.disconnect();
+  }, [controller, kind, containerId, args.ref]);
 
   useLayoutEffect(() => {
     const element = args.ref.current;

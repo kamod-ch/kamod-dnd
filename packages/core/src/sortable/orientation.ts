@@ -26,6 +26,12 @@ export function indexEdgeFromPhysical(
 
 export function readDirection(element: HTMLElement | null | undefined): Direction {
   if (!element) return "ltr";
-  const dir = element.dir || element.closest("[dir]")?.getAttribute("dir");
-  return dir === "rtl" ? "rtl" : "ltr";
+  const explicit = element.dir || element.closest("[dir]")?.getAttribute("dir");
+  if (explicit === "rtl") return "rtl";
+  if (explicit === "ltr") return "ltr";
+  if (typeof getComputedStyle !== "undefined") {
+    const computed = getComputedStyle(element).direction;
+    if (computed === "rtl") return "rtl";
+  }
+  return "ltr";
 }
