@@ -9,11 +9,11 @@
   },
   "dependencies": {
     "@kamod-ch/dnd": "workspace:*",
-    "@preact/signals": "^2.9.4",
-    "preact": "^10.29.7"
+    "@preact/signals": "^2.11.4",
+    "preact": "^11.2.0"
   },
   "devDependencies": {
-    "@preact/preset-vite": "^2.10.2",
-    "vite": "^7.1.7"
+    "@preact/preset-vite": "^2.10.6",
+    "vite": "^8.3.8"
   }
 }

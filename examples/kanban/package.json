@@ -12,14 +12,14 @@
   "dependencies": {
     "@kamod-ch/dnd": "workspace:*",
     "@kamod-ch/icons": "^2.0.0",
-    "@kamod-ch/themes": "^0.2.1",
-    "@kamod-ch/ui": "^2.0.1",
-    "@preact/signals": "^2.9.4",
-    "preact": "^10.29.7"
+    "@kamod-ch/themes": "^0.2.2",
+    "@kamod-ch/ui": "^2.2.0",
+    "@preact/signals": "^2.11.4",
+    "preact": "^11.2.0"
   },
   "devDependencies": {
-    "@preact/preset-vite": "^2.10.2",
+    "@preact/preset-vite": "^2.10.6",
     "typescript": "^7.0.2",
-    "vite": "^7.1.7"
+    "vite": "^8.3.8"
   }
 }

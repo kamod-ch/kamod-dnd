@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/preact";
 import type { RefObject } from "preact";
 import { useState } from "preact/hooks";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -67,7 +67,9 @@ function keydownCalls(spy: { mock: { calls: unknown[][] } }) {
 
 describe("DndProvider", () => {
   afterEach(() => {
-    cleanup();
+    act(() => {
+      cleanup();
+    });
     vi.restoreAllMocks();
   });
 
@@ -136,8 +138,8 @@ describe("DndProvider", () => {
   });
 
   it("keeps the same controller and registrations when scrollRef changes", () => {
-    const scrollA: RefObject<HTMLElement> = { current: null };
-    const scrollB: RefObject<HTMLElement> = { current: document.createElement("div") };
+    const scrollA: RefObject<HTMLElement | null> = { current: null };
+    const scrollB: RefObject<HTMLElement | null> = { current: document.createElement("div") };
     let controller: DndController<ItemData> | null = null;
     const view = render(
       <DndProvider scrollRef={scrollA}>
@@ -196,7 +198,9 @@ describe("DndProvider", () => {
     fireEvent.click(screen.getByRole("button", { name: "start" }));
     expect(keydownCalls(add) - addedBefore).toBeGreaterThan(0);
 
-    view.unmount();
+    act(() => {
+      view.unmount();
+    });
 
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onCancel).toHaveBeenCalledWith("unmount");

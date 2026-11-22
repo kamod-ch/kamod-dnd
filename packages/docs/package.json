@@ -21,15 +21,15 @@
   "dependencies": {
     "@kamod-ch/brand": "^0.4.0",
     "@kamod-ch/dnd": "workspace:*",
-    "@kamod-ch/themes": "^0.2.1",
-    "@preact/signals": "^2.11.3",
-    "preact": "^11.0.1"
+    "@kamod-ch/themes": "^0.2.2",
+    "@preact/signals": "^2.11.4",
+    "preact": "^11.2.0"
   },
   "devDependencies": {
-    "@kamod-ch/preactpress": "^3.0.1",
-    "@tailwindcss/vite": "^4.3.3",
-    "tailwindcss": "^4.3.3",
+    "@kamod-ch/preactpress": "^3.3.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "tailwindcss": "^4.3.5",
     "typescript": "^7.0.2",
-    "vite": "^8.3.4"
+    "vite": "^8.3.8"
   }
 }

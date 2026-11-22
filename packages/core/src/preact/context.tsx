@@ -12,7 +12,7 @@ import { DndAnnouncer } from "./announcer.js";
 export type DndProviderProps<TData> = DndControllerOptions<TData> & {
   children: ComponentChildren;
   locale?: DndLocale;
-  scrollRef?: RefObject<HTMLElement>;
+  scrollRef?: RefObject<HTMLElement | null>;
   reducedMotion?: boolean;
   getItemLabel?: (id: DndId, data: TData) => string;
   getContainerLabel?: (id: DndId) => string;

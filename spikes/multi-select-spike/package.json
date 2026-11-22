@@ -13,14 +13,14 @@
   },
   "dependencies": {
     "@kamod-ch/dnd": "workspace:*",
-    "@preact/signals": "^2.9.4",
-    "preact": "^10.29.7"
+    "@preact/signals": "^2.11.4",
+    "preact": "^11.2.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.1",
-    "@preact/preset-vite": "^2.10.2",
+    "@playwright/test": "^1.65.1",
+    "@preact/preset-vite": "^2.10.6",
     "typescript": "^7.0.2",
-    "vite": "^7.1.7",
-    "vitest": "^5.0.5"
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
   }
 }

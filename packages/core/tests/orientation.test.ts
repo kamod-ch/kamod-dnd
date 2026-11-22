@@ -18,7 +18,9 @@ describe("orientation helpers", () => {
   it("reads RTL from computed style when dir attribute is absent", () => {
     const el = document.createElement("div");
     el.style.direction = "rtl";
+    document.body.appendChild(el);
     expect(readDirection(el)).toBe("rtl");
+    el.remove();
   });
 
   it("commits horizontal LTR order without reversing ids", () => {
