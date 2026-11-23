@@ -14,7 +14,7 @@
   "dependencies": {
     "@kamod-ch/dnd": "workspace:*",
     "@preact/signals": "^2.11.4",
-    "@tanstack/virtual-core": "^3.19.11",
+    "@tanstack/virtual-core": "^3.19.13",
     "preact": "^11.2.0"
   },
   "devDependencies": {
@@ -22,6 +22,6 @@
     "@preact/preset-vite": "^2.10.6",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   }
 }
