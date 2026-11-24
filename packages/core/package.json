@@ -12,6 +12,11 @@
   ],
   "license": "MIT",
   "author": "Klaus Zahiragic <watzak>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kamod-ch/kamod-dnd.git",
+    "directory": "packages/core"
+  },
   "files": [
     "dist",
     "README.md"
